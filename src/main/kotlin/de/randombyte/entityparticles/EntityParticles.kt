@@ -33,7 +33,6 @@ import org.spongepowered.api.event.filter.cause.First
 import org.spongepowered.api.event.game.GameReloadEvent
 import org.spongepowered.api.event.game.state.GameInitializationEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
-import org.spongepowered.api.event.item.inventory.DropItemEvent
 import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.plugin.PluginContainer
 import org.spongepowered.api.scheduler.Task
