@@ -1,0 +1,47 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.1.1"
+    id "org.jetbrains.kotlin.kapt" version "1.1.1"
+    id "com.qixalite.spongestart" version "1.6.2"
+    id "com.github.johnrengelman.shadow" version "1.2.4"
+    id "flavor.pie.promptsign" version "1.0.2"
+}
+
+group "de.randombyte"
+version "0.1"
+
+repositories {
+    jcenter()
+    maven { url "https://repo.spongepowered.org/maven/" }
+    maven { url "https://jitpack.io" }
+}
+
+spongestart {
+    eula true
+    spongeForgeVersion "1.10.2-2281-5.2.0-BETA-2274"
+}
+
+configurations {
+    compile.extendsFrom shadow
+    compile.extendsFrom kapt
+}
+
+dependencies {
+    shadow "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.1"
+    kapt "org.spongepowered:spongeapi:5.1.0"
+    shadow("com.github.randombyte-developer.kosp:kosp:v0.3.12.1") { transitive = false }
+}
+
+jar.enabled = false
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+
+    exclude "StartServer*.*"
+
+    relocate "kotlin", "de.randombyte.entityparticles.shaded.kotlin"
+    relocate "de.randombyte.kosp", "de.randombyte.entityparticles.shaded.kosp"
+
+    classifier = null // Remove '-all' suffix from output file name
+}
+build.dependsOn shadowJar
+signArchives.dependsOn shadowJar
