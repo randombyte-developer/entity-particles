@@ -12,6 +12,7 @@ import de.randombyte.kosp.bstats.BStats
 import de.randombyte.kosp.config.ConfigManager
 import de.randombyte.kosp.executeAsConsole
 import de.randombyte.kosp.extensions.orNull
+import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
@@ -25,6 +26,7 @@ import org.spongepowered.api.effect.particle.ParticleEffect
 import org.spongepowered.api.entity.Entity
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.event.Listener
+import org.spongepowered.api.event.block.InteractBlockEvent
 import org.spongepowered.api.event.cause.Cause
 import org.spongepowered.api.event.cause.NamedCause
 import org.spongepowered.api.event.entity.InteractEntityEvent
@@ -50,7 +52,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "0.1"
+        const val VERSION = "1.0"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -100,6 +102,14 @@ class EntityParticles @Inject constructor(
 
         player.setItemInHand(HandTypes.MAIN_HAND, null)
         executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
+    }
+
+    @Listener
+    fun onPlaceParticleItem(event: InteractBlockEvent.Secondary.MainHand, @First player: Player) {
+        if (player.getItemInHand(HandTypes.MAIN_HAND).orNull()?.get(EntityParticlesKeys.PARTICLE_ID)?.isPresent ?: false) {
+            event.isCancelled = true
+            event.cause.first(Player::class.java).orNull()?.sendMessage("You can't place a ParticleItem!".red())
+        }
     }
 
     private fun registerCommands() {
