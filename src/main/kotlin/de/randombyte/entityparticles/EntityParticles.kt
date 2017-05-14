@@ -103,11 +103,6 @@ class EntityParticles @Inject constructor(
         executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
     }
 
-    @Listener
-    fun onDropItem(event: DropItemEvent.Pre, @First player: Player) {
-        val originalDroppedItems = event.originalDroppedItems
-    }
-
     private fun registerCommands() {
         Sponge.getCommandManager().getOwnedBy(this).forEach { Sponge.getCommandManager().removeMapping(it) }
 
