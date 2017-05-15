@@ -1,2 +1,2 @@
-# claim-blocks
+# EntityParticles
 A Sponge plugin
