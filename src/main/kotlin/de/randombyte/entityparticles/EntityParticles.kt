@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import de.randombyte.entitycommands.data.EntityParticlesKeys
 import de.randombyte.entityparticles.commands.GiveCommand
 import de.randombyte.entityparticles.commands.GiveCommand.Companion.PLAYER_ARG
+import de.randombyte.entityparticles.commands.NewConfigCommand
 import de.randombyte.entityparticles.commands.SetCommand
 import de.randombyte.entityparticles.commands.SetCommand.Companion.ENTITY_UUID_ARG
 import de.randombyte.entityparticles.commands.SetCommand.Companion.WORLD_UUID_ARG
@@ -25,6 +26,7 @@ import org.spongepowered.api.data.type.HandTypes
 import org.spongepowered.api.effect.particle.ParticleEffect
 import org.spongepowered.api.entity.Entity
 import org.spongepowered.api.entity.living.player.Player
+import org.spongepowered.api.event.Cancellable
 import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.block.InteractBlockEvent
 import org.spongepowered.api.event.cause.Cause
@@ -35,6 +37,7 @@ import org.spongepowered.api.event.filter.cause.First
 import org.spongepowered.api.event.game.GameReloadEvent
 import org.spongepowered.api.event.game.state.GameInitializationEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
+import org.spongepowered.api.event.item.inventory.UseItemStackEvent
 import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.plugin.PluginContainer
 import org.spongepowered.api.scheduler.Task
@@ -52,7 +55,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "1.0"
+        const val VERSION = "1.1"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -106,10 +109,15 @@ class EntityParticles @Inject constructor(
     }
 
     @Listener
-    fun onPlaceParticleItem(event: InteractBlockEvent.Secondary.MainHand, @First player: Player) {
+    fun onPlaceParticleItem(event: InteractBlockEvent.Secondary.MainHand, @First player: Player) = onUseItem(event, player)
+
+    @Listener
+    fun onUseItemEvent(event: UseItemStackEvent.Start, @First player: Player) = onUseItem(event, player)
+
+    private fun onUseItem(event: Cancellable, player: Player) {
         if (player.getItemInHand(HandTypes.MAIN_HAND).orNull()?.get(EntityParticlesKeys.PARTICLE_ID)?.isPresent ?: false) {
             event.isCancelled = true
-            event.cause.first(Player::class.java).orNull()?.sendMessage("You can't place a ParticleItem!".red())
+            player.sendMessage("You can't use a ParticleItem!".red())
         }
     }
 
@@ -137,6 +145,18 @@ class EntityParticles @Inject constructor(
                         .executor(SetCommand(
                                 particleExists = { id -> configManager.get().particles.containsKey(id) }))
                         .build(), "set")
+                .child(CommandSpec.builder()
+                        .permission("$ROOT_PERMISSION.newConfig")
+                        .arguments(string(PARTICLE_ID_ARG.toText()))
+                        .executor(NewConfigCommand(
+                                addNewConfig = { id, particle ->
+                                    val config = configManager.get()
+                                    val newConfig = config.copy(particles = config.particles + (id to particle))
+                                    configManager.save(newConfig)
+                                },
+                                updateCommands = { registerCommands() }
+                        ))
+                        .build(), "newConfig")
                 .build(), "entityParticles", "particles", "ep")
     }
 

@@ -21,11 +21,11 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot
 import org.spongepowered.api.text.Text
 
 @ConfigSerializable
-internal class Config(
+internal data class Config(
         @Setting val particles: Map<String, Particle> = emptyMap<String, Particle>()
 ) {
     @ConfigSerializable
-    class Particle(
+    internal data class Particle(
             @Setting val item: ItemStackSnapshot = ItemStackSnapshot.NONE,
             @Setting val displayName: Text = Text.EMPTY,
             @Setting val itemDescription: Text = Text.EMPTY,
@@ -33,7 +33,7 @@ internal class Config(
             @Setting val effects: List<Effect> = emptyList<Effect>()
     ) {
         @ConfigSerializable
-        class Effect(
+        internal data class Effect(
                 @Setting val type: ParticleType = ParticleTypes.HEART,
                 @Setting val quantity: Int = -1,
                 @Setting val velocity: Vector3d = Vector3d.ONE.negate(),

@@ -25,7 +25,7 @@ internal class GiveCommand(
         private val cause: Cause
 ): CommandExecutor {
     internal companion object {
-        const val PLAYER_ARG = "player"
+        internal const val PLAYER_ARG = "player"
     }
 
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {

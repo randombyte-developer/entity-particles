@@ -16,8 +16,8 @@ internal class SetCommand(
         private val particleExists: (id: String) -> Boolean
 ) : CommandExecutor {
     internal companion object {
-        const val WORLD_UUID_ARG = "worldUuid"
-        const val ENTITY_UUID_ARG = "entityUuid"
+        internal const val WORLD_UUID_ARG = "worldUuid"
+        internal const val ENTITY_UUID_ARG = "entityUuid"
     }
 
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
