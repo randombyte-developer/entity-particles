@@ -77,6 +77,7 @@ class EntityParticles @Inject constructor(
 
     @Listener
     fun onInit(event: GameInitializationEvent) {
+        Config.convert(configManager.configLoader)
         generateConfig()
         registerCommands()
         startParticleTask()

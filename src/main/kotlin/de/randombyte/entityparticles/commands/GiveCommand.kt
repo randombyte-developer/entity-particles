@@ -36,8 +36,8 @@ internal class GiveCommand(
                 ?: throw CommandException("Particle '$particleId' is not available!".toText())
 
         val itemStack = ItemStack.builder()
-                .itemType(particle.itemType)
-                .quantity(1)
+                .fromSnapshot(particle.item)
+                .quantity(1) // force single item
                 .apply {
                     if (particle.itemEnchanted) {
                         add(Keys.ITEM_ENCHANTMENTS, listOf(ItemEnchantment(Enchantments.BANE_OF_ARTHROPODS, 1)))
