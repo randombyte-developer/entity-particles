@@ -28,7 +28,7 @@ configurations {
 dependencies {
     shadow "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.1.1"
     kapt "org.spongepowered:spongeapi:5.1.0"
-    shadow("com.github.randombyte-developer.kosp:kosp:v0.3.12.1") { transitive = false }
+    shadow("com.github.randombyte-developer.kosp:kosp:v0.3.12.4") { transitive = false }
 }
 
 jar.enabled = false

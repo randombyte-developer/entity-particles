@@ -81,7 +81,7 @@ class EntityParticles @Inject constructor(
     @Listener
     fun onInit(event: GameInitializationEvent) {
         Config.convert(configManager.configLoader)
-        generateConfig()
+        configManager.generate()
         registerCommands()
         startParticleTask()
 
@@ -90,13 +90,11 @@ class EntityParticles @Inject constructor(
 
     @Listener
     fun onReload(event: GameReloadEvent) {
-        generateConfig()
+        configManager.generate()
         registerCommands()
 
         logger.info("Reloaded!")
     }
-
-    private fun generateConfig() = configManager.save(configManager.get())
 
     @Listener
     fun onRightClickEntity(event: InteractEntityEvent.Secondary.MainHand, @First player: Player, @Getter("getTargetEntity") targetEntity: Entity) {
