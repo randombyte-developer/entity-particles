@@ -2,7 +2,9 @@ package de.randombyte.entityparticles.commands
 
 import de.randombyte.entityparticles.Config
 import de.randombyte.entityparticles.EntityParticles.Companion.PARTICLE_ID_ARG
+import de.randombyte.entityparticles.EntityParticles.Companion.PLAYER_ARG
 import de.randombyte.entityparticles.data.ParticleData
+import de.randombyte.kosp.extensions.give
 import de.randombyte.kosp.extensions.green
 import de.randombyte.kosp.extensions.toText
 import org.spongepowered.api.command.CommandException
@@ -20,14 +22,10 @@ import org.spongepowered.api.item.Enchantments
 import org.spongepowered.api.item.inventory.ItemStack
 import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult
 
-internal class GiveCommand(
+internal class GiveParticleItemCommand(
         private val getParticle: (id: String) -> Config.Particle?,
         private val cause: Cause
 ): CommandExecutor {
-    internal companion object {
-        internal const val PLAYER_ARG = "player"
-    }
-
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         val player = args.getOne<Player>(PLAYER_ARG).get()
         val particleId = args.getOne<String>(PARTICLE_ID_ARG).get()
@@ -54,28 +52,5 @@ internal class GiveCommand(
         player.sendMessage("Given '$particleId' to ${player.name}!".green())
 
         return CommandResult.success()
-    }
-
-    /**
-     * Gives the [Player] the [itemStack] by: 1. putting it in the hand; 2. putting it somewhere
-     * in the inventory; 3. dropping it onto the ground
-     */
-    private fun Player.give(itemStack: ItemStack, cause: Cause) {
-        val isPlayerHoldingSomething = getItemInHand(HandTypes.MAIN_HAND).isPresent
-        if (!isPlayerHoldingSomething) {
-            // nothing in hand -> put item in hand
-            setItemInHand(HandTypes.MAIN_HAND, itemStack)
-        } else {
-            // something in hand -> place item somewhere in inventory
-            val transactionResult = inventory.offer(itemStack)
-            if (transactionResult.type != InventoryTransactionResult.Type.SUCCESS) {
-                // inventory full -> spawn as item
-                val entity = location.extent.createEntity(EntityTypes.ITEM, location.position)
-                entity.offer(Keys.REPRESENTED_ITEM, itemStack.createSnapshot())
-                if (!location.extent.spawnEntity(entity, cause)) {
-                    throw CommandException("Couldn't spawn Item!".toText())
-                }
-            }
-        }
     }
 }

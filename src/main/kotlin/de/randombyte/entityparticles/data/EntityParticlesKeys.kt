@@ -17,4 +17,9 @@ object EntityParticlesKeys {
             Boolean::class.typeToken,
             object : TypeToken<Value<Boolean>>() {},
             DataQuery.of("Active"), "entity-particles:active", "Active")
+
+    val IS_REMOVER: Key<Value<Boolean>> = KeyFactory.makeSingleKey(
+            Boolean::class.typeToken,
+            object : TypeToken<Value<Boolean>>() {},
+            DataQuery.of("Remover"), "entity-particles:remover", "Remover")
 }

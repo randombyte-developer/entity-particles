@@ -12,7 +12,7 @@ import org.spongepowered.api.command.CommandSource
 import org.spongepowered.api.command.args.CommandContext
 import org.spongepowered.api.command.spec.CommandExecutor
 
-internal class SetCommand(
+internal class SetParticleCommand(
         private val particleExists: (id: String) -> Boolean
 ) : CommandExecutor {
     internal companion object {
@@ -29,6 +29,12 @@ internal class SetCommand(
                 ?: throw CommandException("World '$worldUuidString' is not available!".toText())
         val entity = (world.getEntity(entityUuidString.toUUID()).orNull()
                 ?: throw CommandException("Entity '$entityUuidString' in world '$world' is not available!".toText()))
+
+        if (particleId == "nothing") {
+            entity.remove(ParticleData::class.java)
+            return CommandResult.success()
+        }
+
         if (!particleExists(particleId)) throw CommandException("Particle '$particleId' is not available!".toText())
 
         entity.offer(ParticleData(id = particleId, isActive = true))

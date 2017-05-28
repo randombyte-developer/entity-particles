@@ -3,6 +3,7 @@ package de.randombyte.entityparticles
 import com.flowpowered.math.vector.Vector3d
 import de.randombyte.entityparticles.Config.Particle
 import de.randombyte.entityparticles.Config.Particle.Effect
+import de.randombyte.kosp.extensions.gold
 import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
 import de.randombyte.kosp.extensions.typeToken
@@ -12,8 +13,11 @@ import ninja.leaping.configurate.objectmapping.ObjectMappingException
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
 import org.spongepowered.api.Sponge
+import org.spongepowered.api.data.key.Keys
+import org.spongepowered.api.data.meta.ItemEnchantment
 import org.spongepowered.api.effect.particle.ParticleType
 import org.spongepowered.api.effect.particle.ParticleTypes
+import org.spongepowered.api.item.Enchantments
 import org.spongepowered.api.item.ItemType
 import org.spongepowered.api.item.ItemTypes
 import org.spongepowered.api.item.inventory.ItemStack
@@ -22,6 +26,7 @@ import org.spongepowered.api.text.Text
 
 @ConfigSerializable
 internal data class Config(
+        @Setting val removerItem: ItemStackSnapshot = ItemStackSnapshot.NONE,
         @Setting val particles: Map<String, Particle> = emptyMap<String, Particle>()
 ) {
     @ConfigSerializable
@@ -42,7 +47,14 @@ internal data class Config(
         )
     }
 
-    constructor() : this(particles = mapOf(
+    constructor() : this(
+            removerItem = ItemStack.builder()
+                    .itemType(ItemTypes.BONE)
+                    .keyValue(Keys.DISPLAY_NAME, "Particles remover".gold())
+                    .keyValue(Keys.ITEM_ENCHANTMENTS, listOf(ItemEnchantment(Enchantments.BANE_OF_ARTHROPODS, 1)))
+                    .keyValue(Keys.HIDE_ENCHANTMENTS, true)
+                    .build().createSnapshot(),
+            particles = mapOf(
             "love" to Particle(
                     item = ItemStack.of(ItemTypes.BLAZE_ROD, 1).createSnapshot(),
                     displayName = "Love".red(),

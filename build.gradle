@@ -1,10 +1,26 @@
+buildscript {
+    repositories {
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+    }
+
+    dependencies {
+        classpath "net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT"
+    }
+}
+
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.1.1"
     id "org.jetbrains.kotlin.kapt" version "1.1.1"
     id "com.qixalite.spongestart" version "1.6.2"
+    id "org.spongepowered.plugin" version "0.7"
     id "com.github.johnrengelman.shadow" version "1.2.4"
-    id "flavor.pie.promptsign" version "1.0.2"
+    //id "flavor.pie.promptsign" version "1.0.2"
 }
+
+apply plugin: "net.minecraftforge.gradle.forge"
 
 group "de.randombyte"
 version "1.1"
@@ -31,6 +47,12 @@ dependencies {
     shadow("com.github.randombyte-developer.kosp:kosp:v0.3.12.4") { transitive = false }
 }
 
+minecraft {
+    forgeVersion = "2281"
+    mappings = "snapshot_20160822"
+    runDir = "run"
+}
+
 jar.enabled = false
 
 shadowJar {
@@ -44,4 +66,4 @@ shadowJar {
     classifier = null // Remove '-all' suffix from output file name
 }
 build.dependsOn shadowJar
-signArchives.dependsOn shadowJar
+//signArchives.dependsOn shadowJar

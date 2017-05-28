@@ -2,13 +2,13 @@ package de.randombyte.entityparticles
 
 import com.google.inject.Inject
 import de.randombyte.entitycommands.data.EntityParticlesKeys
-import de.randombyte.entityparticles.commands.GiveCommand
-import de.randombyte.entityparticles.commands.GiveCommand.Companion.PLAYER_ARG
-import de.randombyte.entityparticles.commands.NewConfigCommand
-import de.randombyte.entityparticles.commands.SetCommand
-import de.randombyte.entityparticles.commands.SetCommand.Companion.ENTITY_UUID_ARG
-import de.randombyte.entityparticles.commands.SetCommand.Companion.WORLD_UUID_ARG
+import de.randombyte.entitycommands.data.EntityParticlesKeys.PARTICLE_ID
+import de.randombyte.entitycommands.data.EntityParticlesKeys.IS_REMOVER
+import de.randombyte.entityparticles.commands.*
+import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.ENTITY_UUID_ARG
+import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.WORLD_UUID_ARG
 import de.randombyte.entityparticles.data.ParticleData
+import de.randombyte.entityparticles.data.RemoverItemData
 import de.randombyte.kosp.bstats.BStats
 import de.randombyte.kosp.config.ConfigManager
 import de.randombyte.kosp.executeAsConsole
@@ -61,6 +61,7 @@ class EntityParticles @Inject constructor(
         const val ROOT_PERMISSION = ID
 
         const val PARTICLE_ID_ARG = "particleId"
+        const val PLAYER_ARG = "player"
     }
 
     private val configManager = ConfigManager(
@@ -76,6 +77,11 @@ class EntityParticles @Inject constructor(
                 ParticleData::class.java,
                 ParticleData.Immutable::class.java,
                 ParticleData.Builder())
+
+        Sponge.getDataManager().register(
+                RemoverItemData::class.java,
+                RemoverItemData.Immutable::class.java,
+                RemoverItemData.Builder())
     }
 
     @Listener
@@ -98,12 +104,19 @@ class EntityParticles @Inject constructor(
 
     @Listener
     fun onRightClickEntity(event: InteractEntityEvent.Secondary.MainHand, @First player: Player, @Getter("getTargetEntity") targetEntity: Entity) {
-        val itemStack = player.getItemInHand(HandTypes.MAIN_HAND).orNull()
-        val particleId = itemStack?.get(EntityParticlesKeys.PARTICLE_ID)?.orNull() ?: return
         if (targetEntity is Player) return
+        val itemStack = player.getItemInHand(HandTypes.MAIN_HAND).orNull() ?: return
 
-        player.setItemInHand(HandTypes.MAIN_HAND, null)
-        executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
+        val particleId = itemStack.get(PARTICLE_ID)?.orNull()
+        val isRemover = itemStack.get(IS_REMOVER).orElse(false)
+
+        if (particleId != null) {
+            player.setItemInHand(HandTypes.MAIN_HAND, null)
+            executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
+        } else if (isRemover) {
+            player.setItemInHand(HandTypes.MAIN_HAND, null)
+            executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing")
+        }
     }
 
     @Listener
@@ -130,7 +143,7 @@ class EntityParticles @Inject constructor(
                         .arguments(
                                 playerOrSource(PLAYER_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices))
-                        .executor(GiveCommand(
+                        .executor(GiveParticleItemCommand(
                                 getParticle = { id -> configManager.get().particles[id] },
                                 cause = Cause.of(NamedCause.source(this))))
                         .build(), "give")
@@ -139,14 +152,14 @@ class EntityParticles @Inject constructor(
                         .arguments(
                                 string(WORLD_UUID_ARG.toText()),
                                 string(ENTITY_UUID_ARG.toText()),
-                                choices(PARTICLE_ID_ARG.toText(), particleIdChoices))
-                        .executor(SetCommand(
+                                choices(PARTICLE_ID_ARG.toText(), particleIdChoices.plus("nothing" to "nothing")))
+                        .executor(SetParticleCommand(
                                 particleExists = { id -> configManager.get().particles.containsKey(id) }))
                         .build(), "set")
                 .child(CommandSpec.builder()
                         .permission("$ROOT_PERMISSION.newConfig")
                         .arguments(string(PARTICLE_ID_ARG.toText()))
-                        .executor(NewConfigCommand(
+                        .executor(NewParticleConfigCommand(
                                 addNewConfig = { id, particle ->
                                     val config = configManager.get()
                                     val newConfig = config.copy(particles = config.particles + (id to particle))
@@ -155,6 +168,24 @@ class EntityParticles @Inject constructor(
                                 updateCommands = { registerCommands() }
                         ))
                         .build(), "newConfig")
+                .child(CommandSpec.builder()
+                        .child(CommandSpec.builder()
+                                .permission("$ROOT_PERMISSION.removerItem.set")
+                                .executor(SetRemoverItemCommand(
+                                        setItemStackSnapshot = { removerItemStackSnapshot ->
+                                            configManager.save(configManager.get().copy(removerItem = removerItemStackSnapshot))
+                                        }
+                                ))
+                                .build(), "set")
+                        .child(CommandSpec.builder()
+                                .permission("$ROOT_PERMISSION.removerItem.set")
+                                .arguments(playerOrSource(PLAYER_ARG.toText()))
+                                .executor(GiveRemoverItemCommand(
+                                        cause = Cause.of(NamedCause.source(this)),
+                                        getRemoverItem = { configManager.get().removerItem }
+                                ))
+                                .build(), "give")
+                        .build(), "removerItem")
                 .build(), "entityParticles", "particles", "ep")
     }
 
