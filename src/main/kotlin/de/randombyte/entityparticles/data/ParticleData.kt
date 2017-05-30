@@ -1,7 +1,7 @@
 package de.randombyte.entityparticles.data
 
-import de.randombyte.entitycommands.data.EntityParticlesKeys.ACTIVE
-import de.randombyte.entitycommands.data.EntityParticlesKeys.PARTICLE_ID
+import de.randombyte.entityparticles.data.EntityParticlesKeys.ACTIVE
+import de.randombyte.entityparticles.data.EntityParticlesKeys.PARTICLE_ID
 import de.randombyte.entityparticles.data.ParticleData.Immutable
 import de.randombyte.kosp.extensions.toOptional
 import org.spongepowered.api.Sponge

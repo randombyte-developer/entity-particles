@@ -1,6 +1,6 @@
 package de.randombyte.entityparticles.data
 
-import de.randombyte.entitycommands.data.EntityParticlesKeys.IS_REMOVER
+import de.randombyte.entityparticles.data.EntityParticlesKeys.IS_REMOVER
 import de.randombyte.entityparticles.data.RemoverItemData.Immutable
 import de.randombyte.kosp.extensions.toOptional
 import org.spongepowered.api.Sponge

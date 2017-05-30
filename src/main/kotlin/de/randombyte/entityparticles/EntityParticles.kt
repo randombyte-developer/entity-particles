@@ -1,12 +1,12 @@
 package de.randombyte.entityparticles
 
 import com.google.inject.Inject
-import de.randombyte.entitycommands.data.EntityParticlesKeys
-import de.randombyte.entitycommands.data.EntityParticlesKeys.PARTICLE_ID
-import de.randombyte.entitycommands.data.EntityParticlesKeys.IS_REMOVER
 import de.randombyte.entityparticles.commands.*
 import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.ENTITY_UUID_ARG
 import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.WORLD_UUID_ARG
+import de.randombyte.entityparticles.data.EntityParticlesKeys
+import de.randombyte.entityparticles.data.EntityParticlesKeys.IS_REMOVER
+import de.randombyte.entityparticles.data.EntityParticlesKeys.PARTICLE_ID
 import de.randombyte.entityparticles.data.ParticleData
 import de.randombyte.entityparticles.data.RemoverItemData
 import de.randombyte.kosp.bstats.BStats
@@ -35,7 +35,7 @@ import org.spongepowered.api.event.entity.InteractEntityEvent
 import org.spongepowered.api.event.filter.Getter
 import org.spongepowered.api.event.filter.cause.First
 import org.spongepowered.api.event.game.GameReloadEvent
-import org.spongepowered.api.event.game.state.GameInitializationEvent
+import org.spongepowered.api.event.game.state.GameLoadCompleteEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
 import org.spongepowered.api.event.item.inventory.UseItemStackEvent
 import org.spongepowered.api.plugin.Plugin
@@ -55,7 +55,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "1.1"
+        const val VERSION = "1.2"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -84,8 +84,12 @@ class EntityParticles @Inject constructor(
                 RemoverItemData.Builder())
     }
 
+    /**
+     * All the config stuff(convert, generate, commands and the task) has to be this late to let
+     * Sponge load all the DataManipulators.
+     */
     @Listener
-    fun onInit(event: GameInitializationEvent) {
+    fun onPostInit(event: GameLoadCompleteEvent) {
         Config.convert(configManager.configLoader)
         configManager.generate()
         registerCommands()
@@ -126,7 +130,8 @@ class EntityParticles @Inject constructor(
     fun onUseItemEvent(event: UseItemStackEvent.Start, @First player: Player) = onUseItem(event, player)
 
     private fun onUseItem(event: Cancellable, player: Player) {
-        if (player.getItemInHand(HandTypes.MAIN_HAND).orNull()?.get(EntityParticlesKeys.PARTICLE_ID)?.isPresent ?: false) {
+        val item = player.getItemInHand(HandTypes.MAIN_HAND).orNull() ?: return
+        if (item.get(EntityParticlesKeys.PARTICLE_ID)?.isPresent ?: false || item.get(EntityParticlesKeys.IS_REMOVER)?.isPresent ?: false) {
             event.isCancelled = true
             player.sendMessage("You can't use a ParticleItem!".red())
         }
@@ -178,7 +183,7 @@ class EntityParticles @Inject constructor(
                                 ))
                                 .build(), "set")
                         .child(CommandSpec.builder()
-                                .permission("$ROOT_PERMISSION.removerItem.set")
+                                .permission("$ROOT_PERMISSION.removerItem.give")
                                 .arguments(playerOrSource(PLAYER_ARG.toText()))
                                 .executor(GiveRemoverItemCommand(
                                         cause = Cause.of(NamedCause.source(this)),

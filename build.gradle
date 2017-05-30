@@ -10,20 +10,17 @@ buildscript {
         classpath "net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT"
     }
 }
-
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.1.1"
     id "org.jetbrains.kotlin.kapt" version "1.1.1"
-    id "com.qixalite.spongestart" version "1.6.2"
-    id "org.spongepowered.plugin" version "0.7"
+    id "org.spongepowered.plugin" version "0.8.1"
+    id "net.minecrell.vanillagradle.merged" version "2.2-6"
     id "com.github.johnrengelman.shadow" version "1.2.4"
     //id "flavor.pie.promptsign" version "1.0.2"
 }
 
-apply plugin: "net.minecraftforge.gradle.forge"
-
 group "de.randombyte"
-version "1.1"
+version "1.2"
 
 repositories {
     jcenter()
@@ -31,9 +28,10 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 
-spongestart {
-    eula true
-    spongeForgeVersion "1.10.2-2281-5.2.0-BETA-2274"
+minecraft {
+    version = "1.11.2"
+    mappings = "snapshot_20170529"
+    runDir = "run"
 }
 
 configurations {
@@ -47,14 +45,6 @@ dependencies {
     shadow("com.github.randombyte-developer.kosp:kosp:v0.3.12.4") { transitive = false }
 }
 
-minecraft {
-    forgeVersion = "2281"
-    mappings = "snapshot_20160822"
-    runDir = "run"
-}
-
-jar.enabled = false
-
 shadowJar {
     configurations = [project.configurations.shadow]
 
@@ -63,7 +53,7 @@ shadowJar {
     relocate "kotlin", "de.randombyte.entityparticles.shaded.kotlin"
     relocate "de.randombyte.kosp", "de.randombyte.entityparticles.shaded.kosp"
 
-    classifier = null // Remove '-all' suffix from output file name
+    classifier = null // Remove "-all" suffix from output file name
 }
 build.dependsOn shadowJar
 //signArchives.dependsOn shadowJar

@@ -1,4 +1,4 @@
-package de.randombyte.entitycommands.data
+package de.randombyte.entityparticles.data
 
 import com.google.common.reflect.TypeToken
 import de.randombyte.kosp.extensions.typeToken
