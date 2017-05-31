@@ -89,7 +89,7 @@ class EntityParticles @Inject constructor(
      * Sponge load all the DataManipulators.
      */
     @Listener
-    fun onPostInit(event: GameLoadCompleteEvent) {
+    fun onGameLoadComplete(event: GameLoadCompleteEvent) {
         Config.convert(configManager.configLoader)
         configManager.generate()
         registerCommands()
