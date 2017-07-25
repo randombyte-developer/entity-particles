@@ -39,7 +39,6 @@ import org.spongepowered.api.event.game.state.GameLoadCompleteEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
 import org.spongepowered.api.event.item.inventory.UseItemStackEvent
 import org.spongepowered.api.plugin.Plugin
-import org.spongepowered.api.plugin.PluginContainer
 import org.spongepowered.api.scheduler.Task
 
 @Plugin(id = EntityParticles.ID,
@@ -49,8 +48,7 @@ import org.spongepowered.api.scheduler.Task
 class EntityParticles @Inject constructor(
         val logger: Logger,
         @DefaultConfig(sharedRoot = true) configLoader: ConfigurationLoader<CommentedConfigurationNode>,
-        val bStats: BStats,
-        val pluginContainer: PluginContainer
+        val bStats: BStats
 ) {
     internal companion object {
         const val ID = "entity-particles"
@@ -70,6 +68,8 @@ class EntityParticles @Inject constructor(
             hyphenSeparatedKeys = true,
             simpleTextSerialization = true,
             simpleTextTemplateSerialization = true)
+
+    private lateinit var config: Config
 
     @Listener
     fun onPreInit(event: GamePreInitializationEvent) {
@@ -91,7 +91,7 @@ class EntityParticles @Inject constructor(
     @Listener
     fun onGameLoadComplete(event: GameLoadCompleteEvent) {
         Config.convert(configManager.configLoader)
-        configManager.generate()
+        loadConfig()
         registerCommands()
         startParticleTask()
 
@@ -100,10 +100,19 @@ class EntityParticles @Inject constructor(
 
     @Listener
     fun onReload(event: GameReloadEvent) {
-        configManager.generate()
+        loadConfig()
         registerCommands()
 
         logger.info("Reloaded!")
+    }
+
+    private fun loadConfig() {
+        config = configManager.get()
+        saveConfig() // generate config
+    }
+
+    private fun saveConfig() {
+        configManager.save(config)
     }
 
     @Listener
@@ -140,7 +149,7 @@ class EntityParticles @Inject constructor(
     private fun registerCommands() {
         Sponge.getCommandManager().getOwnedBy(this).forEach { Sponge.getCommandManager().removeMapping(it) }
 
-        val particleIdChoices = configManager.get().particles.keys.map { it to it }.toMap()
+        val particleIdChoices = config.particles.keys.map { it to it }.toMap()
 
         Sponge.getCommandManager().register(this, CommandSpec.builder()
                 .child(CommandSpec.builder()
@@ -149,7 +158,7 @@ class EntityParticles @Inject constructor(
                                 playerOrSource(PLAYER_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices))
                         .executor(GiveParticleItemCommand(
-                                getParticle = { id -> configManager.get().particles[id] },
+                                getParticle = { id -> config.particles[id] },
                                 cause = Cause.of(NamedCause.source(this))))
                         .build(), "give")
                 .child(CommandSpec.builder()
@@ -159,16 +168,15 @@ class EntityParticles @Inject constructor(
                                 string(ENTITY_UUID_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices.plus("nothing" to "nothing")))
                         .executor(SetParticleCommand(
-                                getParticleConfig = { id -> configManager.get().particles[id] }))
+                                getParticleConfig = { id -> config.particles[id] }))
                         .build(), "set")
                 .child(CommandSpec.builder()
                         .permission("$ROOT_PERMISSION.newConfig")
                         .arguments(string(PARTICLE_ID_ARG.toText()))
                         .executor(NewParticleConfigCommand(
                                 addNewConfig = { id, particle ->
-                                    val config = configManager.get()
-                                    val newConfig = config.copy(particles = config.particles + (id to particle))
-                                    configManager.save(newConfig)
+                                    config = config.copy(particles = config.particles + (id to particle))
+                                    saveConfig()
                                 },
                                 updateCommands = { registerCommands() }
                         ))
@@ -178,7 +186,8 @@ class EntityParticles @Inject constructor(
                                 .permission("$ROOT_PERMISSION.removerItem.set")
                                 .executor(SetRemoverItemCommand(
                                         setItemStackSnapshot = { removerItemStackSnapshot ->
-                                            configManager.save(configManager.get().copy(removerItem = removerItemStackSnapshot))
+                                            config = config.copy(removerItem = removerItemStackSnapshot)
+                                            saveConfig()
                                         }
                                 ))
                                 .build(), "set")
@@ -187,7 +196,7 @@ class EntityParticles @Inject constructor(
                                 .arguments(playerOrSource(PLAYER_ARG.toText()))
                                 .executor(GiveRemoverItemCommand(
                                         cause = Cause.of(NamedCause.source(this)),
-                                        getRemoverItem = { configManager.get().removerItem }
+                                        getRemoverItem = { config.removerItem }
                                 ))
                                 .build(), "give")
                         .build(), "removerItem")
@@ -203,7 +212,7 @@ class EntityParticles @Inject constructor(
                                 .filter { it.get(EntityParticlesKeys.PARTICLE_ID).isPresent }
                                 .forEach entityLoop@ { entity ->
                                     val particleId = entity.get(EntityParticlesKeys.PARTICLE_ID).get()
-                                    val particle = configManager.get().particles[particleId]
+                                    val particle = config.particles[particleId]
                                     if (particle == null) {
                                         // invalid data -> remove
                                         entity.remove(ParticleData::class.java)
