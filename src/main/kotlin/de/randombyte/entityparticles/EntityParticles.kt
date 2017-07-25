@@ -22,6 +22,7 @@ import org.spongepowered.api.Sponge
 import org.spongepowered.api.command.args.GenericArguments.*
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.config.DefaultConfig
+import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.data.type.HandTypes
 import org.spongepowered.api.effect.particle.ParticleEffect
 import org.spongepowered.api.entity.Entity
@@ -168,7 +169,7 @@ class EntityParticles @Inject constructor(
                                 string(ENTITY_UUID_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices.plus("nothing" to "nothing")))
                         .executor(SetParticleCommand(
-                                getParticleConfig = { id -> config.particles[id] }))
+                                particleExists = { id -> config.particles.containsKey(id) }))
                         .build(), "set")
                 .child(CommandSpec.builder()
                         .permission("$ROOT_PERMISSION.newConfig")
@@ -212,17 +213,18 @@ class EntityParticles @Inject constructor(
                                 .filter { it.get(EntityParticlesKeys.PARTICLE_ID).isPresent }
                                 .forEach entityLoop@ { entity ->
                                     val particleId = entity.get(EntityParticlesKeys.PARTICLE_ID).get()
-                                    val particle = config.particles[particleId]
-                                    if (particle == null) {
+                                    val particleConfig = config.particles[particleId]
+                                    if (particleConfig == null) {
                                         // invalid data -> remove
                                         entity.remove(ParticleData::class.java)
                                         return@entityLoop
                                     }
 
-                                    particle.effects.forEach { effect ->
+                                    particleConfig.effects.forEach { effect ->
                                         val doEffectThisTick = Sponge.getServer().runningTimeTicks % effect.interval == 0
                                         if (doEffectThisTick) {
                                             entity.spawnParticles(effect)
+                                            entity.offer(Keys.GLOWING, particleConfig.glowing)
                                         }
                                     }
                                 }
