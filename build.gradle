@@ -57,3 +57,9 @@ shadowJar {
 }
 build.dependsOn shadowJar
 //signArchives.dependsOn shadowJar
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}

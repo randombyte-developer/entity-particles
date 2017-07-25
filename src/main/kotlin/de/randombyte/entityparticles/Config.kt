@@ -35,6 +35,7 @@ internal data class Config(
             @Setting val displayName: Text = Text.EMPTY,
             @Setting val itemDescription: Text = Text.EMPTY,
             @Setting val itemEnchanted: Boolean = false,
+            @Setting val glowing: Boolean = false,
             @Setting val effects: List<Effect> = emptyList<Effect>()
     ) {
         @ConfigSerializable
@@ -60,6 +61,7 @@ internal data class Config(
                     displayName = "Love".red(),
                     itemDescription = "Right click an entity to apply this effect".toText(),
                     itemEnchanted = true,
+                    glowing = false,
                     effects = listOf(Effect(
                             type = ParticleTypes.HEART,
                             quantity = 10,

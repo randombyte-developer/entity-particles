@@ -159,7 +159,7 @@ class EntityParticles @Inject constructor(
                                 string(ENTITY_UUID_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices.plus("nothing" to "nothing")))
                         .executor(SetParticleCommand(
-                                particleExists = { id -> configManager.get().particles.containsKey(id) }))
+                                getParticleConfig = { id -> configManager.get().particles[id] }))
                         .build(), "set")
                 .child(CommandSpec.builder()
                         .permission("$ROOT_PERMISSION.newConfig")

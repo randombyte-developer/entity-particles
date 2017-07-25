@@ -1,5 +1,6 @@
 package de.randombyte.entityparticles.commands
 
+import de.randombyte.entityparticles.Config
 import de.randombyte.entityparticles.EntityParticles.Companion.PARTICLE_ID_ARG
 import de.randombyte.entityparticles.data.ParticleData
 import de.randombyte.kosp.extensions.getWorld
@@ -11,9 +12,10 @@ import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
 import org.spongepowered.api.command.args.CommandContext
 import org.spongepowered.api.command.spec.CommandExecutor
+import org.spongepowered.api.data.key.Keys
 
 internal class SetParticleCommand(
-        private val particleExists: (id: String) -> Boolean
+        private val getParticleConfig: (id: String) -> Config.Particle?
 ) : CommandExecutor {
     internal companion object {
         internal const val WORLD_UUID_ARG = "worldUuid"
@@ -32,12 +34,14 @@ internal class SetParticleCommand(
 
         if (particleId == "nothing") {
             entity.remove(ParticleData::class.java)
+            entity.offer(Keys.GLOWING, false)
             return CommandResult.success()
         }
 
-        if (!particleExists(particleId)) throw CommandException("Particle '$particleId' is not available!".toText())
+        val particleConfig = getParticleConfig(particleId) ?: throw CommandException("Particle '$particleId' is not available!".toText())
 
         entity.offer(ParticleData(id = particleId, isActive = true))
+        if (particleConfig.glowing) entity.offer(Keys.GLOWING, true)
 
         return CommandResult.success()
     }
