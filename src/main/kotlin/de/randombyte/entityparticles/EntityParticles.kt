@@ -54,7 +54,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "1.2"
+        const val VERSION = "1.3"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
