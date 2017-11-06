@@ -19,6 +19,7 @@ import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import org.slf4j.Logger
 import org.spongepowered.api.Sponge
+import org.spongepowered.api.block.BlockTypes
 import org.spongepowered.api.command.args.GenericArguments.*
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.config.DefaultConfig
@@ -39,6 +40,7 @@ import org.spongepowered.api.event.game.GameReloadEvent
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
 import org.spongepowered.api.event.item.inventory.UseItemStackEvent
+import org.spongepowered.api.item.inventory.ItemStack
 import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.scheduler.Task
 
@@ -54,7 +56,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "1.3"
+        const val VERSION = "1.3.5"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -119,29 +121,31 @@ class EntityParticles @Inject constructor(
     @Listener
     fun onRightClickEntity(event: InteractEntityEvent.Secondary.MainHand, @First player: Player, @Getter("getTargetEntity") targetEntity: Entity) {
         if (targetEntity is Player) return
-        val itemStack = player.getItemInHand(HandTypes.MAIN_HAND).orNull() ?: return
+        val itemInHand = player.getItemInHand(HandTypes.MAIN_HAND).orNull() ?: return
 
-        val particleId = itemStack.get(PARTICLE_ID)?.orNull()
-        val isRemover = itemStack.get(IS_REMOVER).orElse(false)
+        val particleId = itemInHand.get(PARTICLE_ID)?.orNull()
+        val isRemover = itemInHand.get(IS_REMOVER).orElse(false)
 
         if (particleId != null) {
-            player.setItemInHand(HandTypes.MAIN_HAND, null)
+            player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
             executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
         } else if (isRemover) {
-            player.setItemInHand(HandTypes.MAIN_HAND, null)
+            player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
             executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing")
         }
     }
 
     @Listener
-    fun onPlaceParticleItem(event: InteractBlockEvent.Secondary.MainHand, @First player: Player) = onUseItem(event, player)
+    fun onPlaceParticleItem(event: InteractBlockEvent.Secondary.MainHand, @First player: Player) {
+        if (event.targetBlock.state.type != BlockTypes.AIR) onUseItem(event, player)
+    }
 
     @Listener
     fun onUseItemEvent(event: UseItemStackEvent.Start, @First player: Player) = onUseItem(event, player)
 
     private fun onUseItem(event: Cancellable, player: Player) {
         val item = player.getItemInHand(HandTypes.MAIN_HAND).orNull() ?: return
-        if (item.get(EntityParticlesKeys.PARTICLE_ID)?.isPresent ?: false || item.get(EntityParticlesKeys.IS_REMOVER)?.isPresent ?: false) {
+        if (item.get(EntityParticlesKeys.PARTICLE_ID)?.isPresent == true || item.get(EntityParticlesKeys.IS_REMOVER)?.isPresent == true) {
             event.isCancelled = true
             player.sendMessage("You can't use a ParticleItem!".red())
         }
@@ -242,4 +246,6 @@ class EntityParticles @Inject constructor(
                 .build()
         location.extent.spawnParticles(particleEffect, location.position)
     }
+
+    private fun ItemStack.setAmount(amount: Int): ItemStack = apply { quantity = amount }
 }
