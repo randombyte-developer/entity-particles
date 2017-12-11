@@ -1,5 +1,6 @@
 package de.randombyte.entityparticles
 
+import com.flowpowered.math.vector.Vector3i
 import com.google.inject.Inject
 import de.randombyte.entityparticles.commands.*
 import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.ENTITY_UUID_ARG
@@ -26,6 +27,7 @@ import org.spongepowered.api.config.DefaultConfig
 import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.data.type.HandTypes
 import org.spongepowered.api.effect.particle.ParticleEffect
+import org.spongepowered.api.effect.particle.ParticleOptions
 import org.spongepowered.api.entity.Entity
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.event.Cancellable
@@ -43,6 +45,7 @@ import org.spongepowered.api.event.item.inventory.UseItemStackEvent
 import org.spongepowered.api.item.inventory.ItemStack
 import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.scheduler.Task
+import org.spongepowered.api.util.Color
 
 @Plugin(id = EntityParticles.ID,
         name = EntityParticles.NAME,
@@ -56,7 +59,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "1.3.5"
+        const val VERSION = "1.4.1"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -243,8 +246,9 @@ class EntityParticles @Inject constructor(
                 .quantity(effect.quantity)
                 .velocity(effect.velocity)
                 .offset(effect.offset)
+                .option(ParticleOptions.COLOR, Color.of(effect.color.coerceIn(Vector3i.ZERO..Vector3i.from(255, 255, 255))))
                 .build()
-        location.extent.spawnParticles(particleEffect, location.position)
+        location.extent.spawnParticles(particleEffect, location.position.add(effect.centerOffset))
     }
 
     private fun ItemStack.setAmount(amount: Int): ItemStack = apply { quantity = amount }

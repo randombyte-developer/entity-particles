@@ -14,13 +14,10 @@ import org.spongepowered.api.command.args.CommandContext
 import org.spongepowered.api.command.spec.CommandExecutor
 import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.data.meta.ItemEnchantment
-import org.spongepowered.api.data.type.HandTypes
-import org.spongepowered.api.entity.EntityTypes
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.event.cause.Cause
 import org.spongepowered.api.item.Enchantments
 import org.spongepowered.api.item.inventory.ItemStack
-import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult
 
 internal class GiveParticleItemCommand(
         private val getParticle: (id: String) -> Config.Particle?,

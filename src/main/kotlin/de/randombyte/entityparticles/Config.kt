@@ -1,7 +1,7 @@
 package de.randombyte.entityparticles
 
 import com.flowpowered.math.vector.Vector3d
-import de.randombyte.entityparticles.Config.Particle
+import com.flowpowered.math.vector.Vector3i
 import de.randombyte.entityparticles.Config.Particle.Effect
 import de.randombyte.kosp.extensions.gold
 import de.randombyte.kosp.extensions.red
@@ -27,7 +27,7 @@ import org.spongepowered.api.text.Text
 @ConfigSerializable
 internal data class Config(
         @Setting val removerItem: ItemStackSnapshot = ItemStackSnapshot.NONE,
-        @Setting val particles: Map<String, Particle> = emptyMap<String, Particle>()
+        @Setting val particles: Map<String, Particle> = emptyMap()
 ) {
     @ConfigSerializable
     internal data class Particle(
@@ -36,7 +36,7 @@ internal data class Config(
             @Setting val itemDescription: Text = Text.EMPTY,
             @Setting val itemEnchanted: Boolean = false,
             @Setting val glowing: Boolean = false,
-            @Setting val effects: List<Effect> = emptyList<Effect>()
+            @Setting val effects: List<Effect> = emptyList()
     ) {
         @ConfigSerializable
         internal data class Effect(
@@ -44,7 +44,9 @@ internal data class Config(
                 @Setting val quantity: Int = -1,
                 @Setting val velocity: Vector3d = Vector3d.ONE.negate(),
                 @Setting val offset: Vector3d = Vector3d.ONE.negate(),
-                @Setting(comment = "In ticks(20 ticks = 1 second)") val interval: Int = -1
+                @Setting val centerOffset: Vector3d = Vector3d.ZERO,
+                @Setting(comment = "In ticks(20 ticks = 1 second)") val interval: Int = -1,
+                @Setting(comment = "Supported by redstone dust") val color: Vector3i = Vector3i.ONE.negate()
         )
     }
 
@@ -67,7 +69,8 @@ internal data class Config(
                             quantity = 10,
                             velocity = Vector3d(0.0, 0.3, 0.0),
                             offset = Vector3d.ONE,
-                            interval = 20
+                            interval = 20,
+                            color = Vector3i.ONE
                     )))
     ))
 
