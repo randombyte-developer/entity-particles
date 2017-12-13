@@ -11,6 +11,7 @@ import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
 import org.spongepowered.api.command.args.CommandContext
 import org.spongepowered.api.command.spec.CommandExecutor
+import org.spongepowered.api.data.key.Keys
 
 internal class SetParticleCommand(
         private val particleExists: (id: String) -> Boolean
@@ -32,6 +33,7 @@ internal class SetParticleCommand(
 
         if (particleId == "nothing") {
             entity.remove(ParticleData::class.java)
+            entity.offer(Keys.GLOWING, false)
             return CommandResult.success()
         }
 
