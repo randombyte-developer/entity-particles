@@ -17,6 +17,8 @@ import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.data.meta.ItemEnchantment
 import org.spongepowered.api.effect.particle.ParticleType
 import org.spongepowered.api.effect.particle.ParticleTypes
+import org.spongepowered.api.entity.EntityType
+import org.spongepowered.api.entity.EntityTypes
 import org.spongepowered.api.item.Enchantments
 import org.spongepowered.api.item.ItemType
 import org.spongepowered.api.item.ItemTypes
@@ -27,7 +29,8 @@ import org.spongepowered.api.text.Text
 @ConfigSerializable
 internal data class Config(
         @Setting val removerItem: ItemStackSnapshot = ItemStackSnapshot.NONE,
-        @Setting val particles: Map<String, Particle> = emptyMap()
+        @Setting val particles: Map<String, Particle> = emptyMap(),
+        @Setting val blockedEntities: List<EntityType> = emptyList()
 ) {
     @ConfigSerializable
     internal data class Particle(
@@ -51,6 +54,7 @@ internal data class Config(
     }
 
     constructor() : this(
+            blockedEntities = listOf(EntityTypes.PLAYER),
             removerItem = ItemStack.builder()
                     .itemType(ItemTypes.BONE)
                     .keyValue(Keys.DISPLAY_NAME, "Particles remover".gold())

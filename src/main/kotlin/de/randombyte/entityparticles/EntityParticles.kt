@@ -59,7 +59,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "1.4.2"
+        const val VERSION = "1.4.3"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -123,10 +123,10 @@ class EntityParticles @Inject constructor(
 
     @Listener
     fun onRightClickEntity(event: InteractEntityEvent.Secondary.MainHand, @First player: Player, @Getter("getTargetEntity") targetEntity: Entity) {
-        if (targetEntity is Player) return
+        if (targetEntity.type in config.blockedEntities) return
         val itemInHand = player.getItemInHand(HandTypes.MAIN_HAND).orNull() ?: return
 
-        val particleId = itemInHand.get(PARTICLE_ID)?.orNull()
+        val particleId = itemInHand.get(PARTICLE_ID).orNull()
         val isRemover = itemInHand.get(IS_REMOVER).orElse(false)
 
         if (particleId != null) {
