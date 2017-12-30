@@ -11,20 +11,19 @@ import org.spongepowered.api.command.args.CommandContext
 import org.spongepowered.api.command.spec.CommandExecutor
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.event.cause.Cause
+import org.spongepowered.api.item.inventory.ItemStack
 import org.spongepowered.api.item.inventory.ItemStackSnapshot
 
 internal class GiveRemoverItemCommand(
-        private val cause: Cause,
-        private val getRemoverItem: () -> ItemStackSnapshot
+        private val getRemoverItem: () -> ItemStack
 ) : CommandExecutor {
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         val player = args.getOne<Player>(PLAYER_ARG).get()
 
-        player.give(getRemoverItem().createStack()
+        val itemStack = getRemoverItem()
                 .singleCopy()
-                .apply {
-                    offer(RemoverItemData(isRemover = true))
-                }, cause)
+                .apply { offer(RemoverItemData(isRemover = true)) }
+        player.give(itemStack)
 
         player.sendMessage("Given the remover item to ${player.name}!".green())
 

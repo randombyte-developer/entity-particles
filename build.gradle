@@ -1,24 +1,12 @@
-buildscript {
-    repositories {
-        maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-    }
-
-    dependencies {
-        classpath "net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT"
-    }
-}
 plugins {
-    id "org.jetbrains.kotlin.jvm" version "1.2.0"
-    id "org.jetbrains.kotlin.kapt" version "1.2.0"
+    id "org.jetbrains.kotlin.jvm" version "1.2.10"
+    id "org.jetbrains.kotlin.kapt" version "1.2.10"
     id "com.github.johnrengelman.shadow" version "1.2.4"
     //id "flavor.pie.promptsign" version "1.0.2"
 }
 
 group "de.randombyte"
-version "1.4.3"
+version "2.0"
 
 repositories {
     jcenter()
@@ -32,9 +20,10 @@ configurations {
 }
 
 dependencies {
-    shadow "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.2.0"
-    kapt "org.spongepowered:spongeapi:5.1.0"
-    shadow("com.github.randombyte-developer.kosp:kosp:v0.5.4.1") { transitive = false }
+    shadow "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.2.10"
+    kapt "org.spongepowered:spongeapi:7.0.0-SNAPSHOT"
+    shadow("com.github.randombyte-developer.kosp:kosp:v1.0") { transitive = false }
+    compile files("libs/byte-items-2.0.jar")
 }
 
 shadowJar {

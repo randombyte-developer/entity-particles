@@ -3,38 +3,30 @@ package de.randombyte.entityparticles
 import com.flowpowered.math.vector.Vector3d
 import com.flowpowered.math.vector.Vector3i
 import de.randombyte.entityparticles.Config.Particle.Effect
-import de.randombyte.kosp.extensions.gold
+import de.randombyte.entityparticles.data.ParticleData
 import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
-import de.randombyte.kosp.extensions.typeToken
-import ninja.leaping.configurate.commented.CommentedConfigurationNode
-import ninja.leaping.configurate.loader.ConfigurationLoader
-import ninja.leaping.configurate.objectmapping.ObjectMappingException
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
-import org.spongepowered.api.Sponge
 import org.spongepowered.api.data.key.Keys
-import org.spongepowered.api.data.meta.ItemEnchantment
 import org.spongepowered.api.effect.particle.ParticleType
 import org.spongepowered.api.effect.particle.ParticleTypes
 import org.spongepowered.api.entity.EntityType
 import org.spongepowered.api.entity.EntityTypes
-import org.spongepowered.api.item.Enchantments
-import org.spongepowered.api.item.ItemType
-import org.spongepowered.api.item.ItemTypes
+import org.spongepowered.api.item.enchantment.Enchantment
+import org.spongepowered.api.item.enchantment.EnchantmentTypes
 import org.spongepowered.api.item.inventory.ItemStack
-import org.spongepowered.api.item.inventory.ItemStackSnapshot
 import org.spongepowered.api.text.Text
 
 @ConfigSerializable
 internal data class Config(
-        @Setting val removerItem: ItemStackSnapshot = ItemStackSnapshot.NONE,
+        @Setting(comment = "Ignore the 'glowing' and 'effects' setting.") val removerItem: Particle = Particle(),
         @Setting val particles: Map<String, Particle> = emptyMap(),
         @Setting val blockedEntities: List<EntityType> = emptyList()
 ) {
     @ConfigSerializable
     internal data class Particle(
-            @Setting val item: ItemStackSnapshot = ItemStackSnapshot.NONE,
+            @Setting val item: String = "",
             @Setting val displayName: Text = Text.EMPTY,
             @Setting val itemDescription: Text = Text.EMPTY,
             @Setting val itemEnchanted: Boolean = false,
@@ -51,19 +43,32 @@ internal data class Config(
                 @Setting(comment = "In ticks(20 ticks = 1 second)") val interval: Int = -1,
                 @Setting(comment = "Supported by redstone dust") val color: Vector3i = Vector3i.ONE.negate()
         )
+
+        fun createItemStack() = ItemStack.builder()
+                .fromSnapshot(resolveByteItems(item))
+                .quantity(1) // force single item
+                .apply {
+                    if (itemEnchanted) {
+                        add(Keys.ITEM_ENCHANTMENTS, listOf(Enchantment.of(EnchantmentTypes.LUCK_OF_THE_SEA, 0)))
+                        add(Keys.HIDE_ENCHANTMENTS, true)
+                    }
+                }
+                .add(Keys.DISPLAY_NAME, displayName)
+                .add(Keys.ITEM_LORE, listOf(itemDescription))
+                .build()
     }
 
     constructor() : this(
             blockedEntities = listOf(EntityTypes.PLAYER),
-            removerItem = ItemStack.builder()
-                    .itemType(ItemTypes.BONE)
-                    .keyValue(Keys.DISPLAY_NAME, "Particles remover".gold())
-                    .keyValue(Keys.ITEM_ENCHANTMENTS, listOf(ItemEnchantment(Enchantments.BANE_OF_ARTHROPODS, 1)))
-                    .keyValue(Keys.HIDE_ENCHANTMENTS, true)
-                    .build().createSnapshot(),
+            removerItem = Particle(
+                    item = "minecraft:bone",
+                    displayName = "Particles remover".toText(),
+                    itemDescription = Text.EMPTY,
+                    itemEnchanted = true
+            ),
             particles = mapOf(
             "love" to Particle(
-                    item = ItemStack.of(ItemTypes.BLAZE_ROD, 1).createSnapshot(),
+                    item = "minecraft:blaze_rod",
                     displayName = "Love".red(),
                     itemDescription = "Right click an entity to apply this effect".toText(),
                     itemEnchanted = true,
@@ -77,24 +82,4 @@ internal data class Config(
                             color = Vector3i.ONE
                     )))
     ))
-
-    internal companion object {
-        internal fun convert(configurationLoader: ConfigurationLoader<CommentedConfigurationNode>) {
-            val rootNode = configurationLoader.load()
-            rootNode.getNode("particles").childrenMap.forEach { _, particleNode ->
-                val itemTypeNode = particleNode.getNode("item-type")
-                if (!itemTypeNode.isVirtual) {
-                    val itemTypeString = itemTypeNode.string
-                    val itemType = Sponge.getRegistry().getType(ItemType::class.java, itemTypeString).orElseThrow {
-                        ObjectMappingException("ItemType '$itemTypeString' is not available!")
-                    }
-                    val itemStackSnapshotNode = particleNode.getNode("item")
-                    val itemStackSnapshot = ItemStack.of(itemType, 1).createSnapshot()
-                    itemStackSnapshotNode.setValue(ItemStackSnapshot::class.typeToken, itemStackSnapshot)
-                }
-            }
-
-            configurationLoader.save(rootNode)
-        }
-    }
 }

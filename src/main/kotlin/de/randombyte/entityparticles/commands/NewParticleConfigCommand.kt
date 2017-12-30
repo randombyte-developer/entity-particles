@@ -18,12 +18,9 @@ internal class NewParticleConfigCommand(
 ) : PlayerExecutedCommand() {
     override fun executedByPlayer(player: Player, args: CommandContext): CommandResult {
         val newId = args.getOne<String>(EntityParticles.PARTICLE_ID_ARG).get()
-        val itemStack = player.getItemInHand(HandTypes.MAIN_HAND).orElseThrow {
-            CommandException("You must hold the item your the hand!".toText())
-        }.copy()
 
         addNewConfig(newId, Config().particles.getValue("love").copy(
-                item = itemStack.singleCopy().createSnapshot()
+                item = "minecraft:stick"
         ))
 
         player.sendMessage("Added to config!".green())

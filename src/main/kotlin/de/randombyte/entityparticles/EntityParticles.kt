@@ -2,6 +2,7 @@ package de.randombyte.entityparticles
 
 import com.flowpowered.math.vector.Vector3i
 import com.google.inject.Inject
+import de.randombyte.byteitems.ByteItemsApi
 import de.randombyte.entityparticles.commands.*
 import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.ENTITY_UUID_ARG
 import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.WORLD_UUID_ARG
@@ -16,6 +17,7 @@ import de.randombyte.kosp.executeAsConsole
 import de.randombyte.kosp.extensions.orNull
 import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
+import de.randombyte.kosp.getServiceOrFail
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import org.slf4j.Logger
@@ -24,6 +26,7 @@ import org.spongepowered.api.block.BlockTypes
 import org.spongepowered.api.command.args.GenericArguments.*
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.config.DefaultConfig
+import org.spongepowered.api.data.DataRegistration
 import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.data.type.HandTypes
 import org.spongepowered.api.effect.particle.ParticleEffect
@@ -33,8 +36,6 @@ import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.event.Cancellable
 import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.block.InteractBlockEvent
-import org.spongepowered.api.event.cause.Cause
-import org.spongepowered.api.event.cause.NamedCause
 import org.spongepowered.api.event.entity.InteractEntityEvent
 import org.spongepowered.api.event.filter.Getter
 import org.spongepowered.api.event.filter.cause.First
@@ -43,23 +44,27 @@ import org.spongepowered.api.event.game.state.GameLoadCompleteEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
 import org.spongepowered.api.event.item.inventory.UseItemStackEvent
 import org.spongepowered.api.item.inventory.ItemStack
+import org.spongepowered.api.plugin.Dependency
 import org.spongepowered.api.plugin.Plugin
+import org.spongepowered.api.plugin.PluginContainer
 import org.spongepowered.api.scheduler.Task
 import org.spongepowered.api.util.Color
 
 @Plugin(id = EntityParticles.ID,
         name = EntityParticles.NAME,
         version = EntityParticles.VERSION,
-        authors = arrayOf(EntityParticles.AUTHOR))
+        dependencies = [(Dependency(id = "byte-items"))],
+        authors = [(EntityParticles.AUTHOR)])
 class EntityParticles @Inject constructor(
         val logger: Logger,
         @DefaultConfig(sharedRoot = true) configLoader: ConfigurationLoader<CommentedConfigurationNode>,
+        val pluginContainer: PluginContainer,
         val bStats: BStats
 ) {
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "1.4.3"
+        const val VERSION = "2.0"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -79,24 +84,29 @@ class EntityParticles @Inject constructor(
 
     @Listener
     fun onPreInit(event: GamePreInitializationEvent) {
-        Sponge.getDataManager().register(
-                ParticleData::class.java,
-                ParticleData.Immutable::class.java,
-                ParticleData.Builder())
+        DataRegistration.builder()
+                .dataClass(ParticleData::class.java)
+                .immutableClass(ParticleData.Immutable::class.java)
+                .builder(ParticleData.Builder())
+                .manipulatorId("particle")
+                .dataName("Particle")
+                .buildAndRegister(pluginContainer)
 
-        Sponge.getDataManager().register(
-                RemoverItemData::class.java,
-                RemoverItemData.Immutable::class.java,
-                RemoverItemData.Builder())
+        DataRegistration.builder()
+                .dataClass(RemoverItemData::class.java)
+                .immutableClass(RemoverItemData.Immutable::class.java)
+                .builder(RemoverItemData.Builder())
+                .manipulatorId("remover")
+                .dataName("Remover")
+                .buildAndRegister(pluginContainer)
     }
 
     /**
-     * All the config stuff(convert, generate, commands and the task) has to be this late to let
+     * All the config stuff(generate, commands and the task) has to be this late to let
      * Sponge load all the DataManipulators.
      */
     @Listener
     fun onGameLoadComplete(event: GameLoadCompleteEvent) {
-        Config.convert(configManager.configLoader)
         loadConfig()
         registerCommands()
         startParticleTask()
@@ -129,10 +139,13 @@ class EntityParticles @Inject constructor(
         val particleId = itemInHand.get(PARTICLE_ID).orNull()
         val isRemover = itemInHand.get(IS_REMOVER).orElse(false)
 
+        event.isCancelled = true
+
         if (particleId != null) {
             player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
             executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
         } else if (isRemover) {
+            if (!targetEntity.get(EntityParticlesKeys.PARTICLE_ID).isPresent) return
             player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
             executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing")
         }
@@ -148,7 +161,7 @@ class EntityParticles @Inject constructor(
 
     private fun onUseItem(event: Cancellable, player: Player) {
         val item = player.getItemInHand(HandTypes.MAIN_HAND).orNull() ?: return
-        if (item.get(EntityParticlesKeys.PARTICLE_ID)?.isPresent == true || item.get(EntityParticlesKeys.IS_REMOVER)?.isPresent == true) {
+        if (item.get(EntityParticlesKeys.PARTICLE_ID).isPresent || item.get(EntityParticlesKeys.IS_REMOVER).isPresent) {
             event.isCancelled = true
             player.sendMessage("You can't use a ParticleItem!".red())
         }
@@ -165,9 +178,7 @@ class EntityParticles @Inject constructor(
                         .arguments(
                                 playerOrSource(PLAYER_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices))
-                        .executor(GiveParticleItemCommand(
-                                getParticle = { id -> config.particles[id] },
-                                cause = Cause.of(NamedCause.source(this))))
+                        .executor(GiveParticleItemCommand(getParticle = { id -> config.particles[id] }))
                         .build(), "give")
                 .child(CommandSpec.builder()
                         .permission("$ROOT_PERMISSION.set")
@@ -175,11 +186,10 @@ class EntityParticles @Inject constructor(
                                 string(WORLD_UUID_ARG.toText()),
                                 string(ENTITY_UUID_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices.plus("nothing" to "nothing")))
-                        .executor(SetParticleCommand(
-                                particleExists = { id -> config.particles.containsKey(id) }))
+                        .executor(SetParticleCommand(particleExists = { id -> config.particles.containsKey(id) }))
                         .build(), "set")
                 .child(CommandSpec.builder()
-                        .permission("$ROOT_PERMISSION.newConfig")
+                        .permission("$ROOT_PERMISSION.new-config")
                         .arguments(string(PARTICLE_ID_ARG.toText()))
                         .executor(NewParticleConfigCommand(
                                 addNewConfig = { id, particle ->
@@ -191,21 +201,9 @@ class EntityParticles @Inject constructor(
                         .build(), "newConfig")
                 .child(CommandSpec.builder()
                         .child(CommandSpec.builder()
-                                .permission("$ROOT_PERMISSION.removerItem.set")
-                                .executor(SetRemoverItemCommand(
-                                        setItemStackSnapshot = { removerItemStackSnapshot ->
-                                            config = config.copy(removerItem = removerItemStackSnapshot)
-                                            saveConfig()
-                                        }
-                                ))
-                                .build(), "set")
-                        .child(CommandSpec.builder()
-                                .permission("$ROOT_PERMISSION.removerItem.give")
+                                .permission("$ROOT_PERMISSION.remover-item.give")
                                 .arguments(playerOrSource(PLAYER_ARG.toText()))
-                                .executor(GiveRemoverItemCommand(
-                                        cause = Cause.of(NamedCause.source(this)),
-                                        getRemoverItem = { config.removerItem }
-                                ))
+                                .executor(GiveRemoverItemCommand(getRemoverItem = { config.removerItem.createItemStack() }))
                                 .build(), "give")
                         .build(), "removerItem")
                 .build(), "entityParticles", "particles", "ep")
