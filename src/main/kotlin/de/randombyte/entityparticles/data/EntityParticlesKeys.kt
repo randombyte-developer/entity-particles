@@ -18,7 +18,7 @@ object EntityParticlesKeys {
 
     val ACTIVE: Key<Value<Boolean>> = Key.builder()
             .type(object : TypeToken<Value<Boolean>>() {})
-            .id("${EntityParticles.ID}:acitve")
+            .id("${EntityParticles.ID}:active")
             .name("Active")
             .query(DataQuery.of("Active"))
             .build()
