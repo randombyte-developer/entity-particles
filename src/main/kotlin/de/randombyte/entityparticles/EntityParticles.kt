@@ -53,7 +53,7 @@ import org.spongepowered.api.util.Color
 @Plugin(id = EntityParticles.ID,
         name = EntityParticles.NAME,
         version = EntityParticles.VERSION,
-        dependencies = [(Dependency(id = "byte-items"))],
+        dependencies = [(Dependency(id = "byte-items", optional = true))],
         authors = [(EntityParticles.AUTHOR)])
 class EntityParticles @Inject constructor(
         val logger: Logger,
@@ -64,7 +64,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "2.0.1"
+        const val VERSION = "2.0.2"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
