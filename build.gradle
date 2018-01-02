@@ -6,7 +6,7 @@ plugins {
 }
 
 group "de.randombyte"
-version "2.0.2"
+version "2.0.3"
 
 repositories {
     jcenter()
@@ -21,7 +21,7 @@ configurations {
 
 dependencies {
     shadow "org.jetbrains.kotlin:kotlin-stdlib-jre8:1.2.10"
-    kapt "org.spongepowered:spongeapi:7.0.0-SNAPSHOT"
+    kapt "org.spongepowered:spongeapi:7.0.0"
     shadow("com.github.randombyte-developer.kosp:kosp:v1.0") { transitive = false }
     compile files("libs/byte-items-2.0.jar")
 }

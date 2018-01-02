@@ -1,32 +1,38 @@
 package de.randombyte.entityparticles.data
 
-import com.google.common.reflect.TypeToken
 import de.randombyte.entityparticles.EntityParticles
-import de.randombyte.kosp.extensions.typeToken
 import org.spongepowered.api.data.DataQuery
 import org.spongepowered.api.data.key.Key
-import org.spongepowered.api.data.key.KeyFactory
 import org.spongepowered.api.data.value.mutable.Value
+import org.spongepowered.api.util.TypeTokens
 
 object EntityParticlesKeys {
-    val PARTICLE_ID: Key<Value<String>> = Key.builder()
-            .type(object : TypeToken<Value<String>>() {})
-            .id("${EntityParticles.ID}:id")
-            .name("ID")
-            .query(DataQuery.of("Id"))
-            .build()
+    lateinit var PARTICLE_ID: Key<Value<String>>
 
-    val ACTIVE: Key<Value<Boolean>> = Key.builder()
-            .type(object : TypeToken<Value<Boolean>>() {})
-            .id("${EntityParticles.ID}:active")
-            .name("Active")
-            .query(DataQuery.of("Active"))
-            .build()
+    lateinit var ACTIVE: Key<Value<Boolean>>
 
-    val IS_REMOVER: Key<Value<Boolean>> = Key.builder()
-            .type(object : TypeToken<Value<Boolean>>() {})
-            .id("${EntityParticles.ID}:remover")
-            .name("Remover")
-            .query(DataQuery.of("Remover"))
-            .build()
+    lateinit var IS_REMOVER: Key<Value<Boolean>>
+
+    fun buildKeys() {
+        PARTICLE_ID = Key.builder()
+                .type(TypeTokens.STRING_VALUE_TOKEN)
+                .id("${EntityParticles.ID}:id")
+                .name("ID")
+                .query(DataQuery.of("Id"))
+                .build()
+
+        ACTIVE = Key.builder()
+                .type(TypeTokens.BOOLEAN_VALUE_TOKEN)
+                .id("${EntityParticles.ID}:active")
+                .name("Active")
+                .query(DataQuery.of("Active"))
+                .build()
+
+        IS_REMOVER = Key.builder()
+                .type(TypeTokens.BOOLEAN_VALUE_TOKEN)
+                .id("${EntityParticles.ID}:remover")
+                .name("Remover")
+                .query(DataQuery.of("Remover"))
+                .build()
+    }
 }

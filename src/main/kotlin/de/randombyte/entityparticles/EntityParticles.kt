@@ -2,8 +2,10 @@ package de.randombyte.entityparticles
 
 import com.flowpowered.math.vector.Vector3i
 import com.google.inject.Inject
-import de.randombyte.byteitems.ByteItemsApi
-import de.randombyte.entityparticles.commands.*
+import de.randombyte.entityparticles.commands.GiveParticleItemCommand
+import de.randombyte.entityparticles.commands.GiveRemoverItemCommand
+import de.randombyte.entityparticles.commands.NewParticleConfigCommand
+import de.randombyte.entityparticles.commands.SetParticleCommand
 import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.ENTITY_UUID_ARG
 import de.randombyte.entityparticles.commands.SetParticleCommand.Companion.WORLD_UUID_ARG
 import de.randombyte.entityparticles.data.EntityParticlesKeys
@@ -17,7 +19,6 @@ import de.randombyte.kosp.executeAsConsole
 import de.randombyte.kosp.extensions.orNull
 import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
-import de.randombyte.kosp.getServiceOrFail
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
 import org.slf4j.Logger
@@ -64,7 +65,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "2.0.2"
+        const val VERSION = "2.0.3"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -84,6 +85,8 @@ class EntityParticles @Inject constructor(
 
     @Listener
     fun onPreInit(event: GamePreInitializationEvent) {
+        EntityParticlesKeys.buildKeys()
+
         DataRegistration.builder()
                 .dataClass(ParticleData::class.java)
                 .immutableClass(ParticleData.Immutable::class.java)
@@ -206,7 +209,7 @@ class EntityParticles @Inject constructor(
                                 .executor(GiveRemoverItemCommand(getRemoverItem = { config.removerItem.createItemStack() }))
                                 .build(), "give")
                         .build(), "removerItem")
-                .build(), "entityParticles", "particles", "ep")
+                .build(), "entityparticles", "particles", "ep")
     }
 
     private fun startParticleTask() {
