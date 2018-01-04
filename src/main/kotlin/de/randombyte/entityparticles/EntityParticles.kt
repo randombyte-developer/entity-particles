@@ -65,7 +65,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "2.0.3"
+        const val VERSION = "2.0.4"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -87,21 +87,21 @@ class EntityParticles @Inject constructor(
     fun onPreInit(event: GamePreInitializationEvent) {
         EntityParticlesKeys.buildKeys()
 
-        DataRegistration.builder()
+        Sponge.getDataManager().registerLegacyManipulatorIds("de.randombyte.entityparticles.data.ParticleData", DataRegistration.builder()
                 .dataClass(ParticleData::class.java)
                 .immutableClass(ParticleData.Immutable::class.java)
                 .builder(ParticleData.Builder())
                 .manipulatorId("particle")
                 .dataName("Particle")
-                .buildAndRegister(pluginContainer)
+                .buildAndRegister(pluginContainer))
 
-        DataRegistration.builder()
+        Sponge.getDataManager().registerLegacyManipulatorIds("de.randombyte.entityparticles.data.RemoverItemData", DataRegistration.builder()
                 .dataClass(RemoverItemData::class.java)
                 .immutableClass(RemoverItemData.Immutable::class.java)
                 .builder(RemoverItemData.Builder())
                 .manipulatorId("remover")
                 .dataName("Remover")
-                .buildAndRegister(pluginContainer)
+                .buildAndRegister(pluginContainer))
     }
 
     /**
