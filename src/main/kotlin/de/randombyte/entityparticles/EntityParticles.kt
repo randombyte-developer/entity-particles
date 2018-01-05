@@ -57,15 +57,15 @@ import org.spongepowered.api.util.Color
         dependencies = [(Dependency(id = "byte-items", optional = true))],
         authors = [(EntityParticles.AUTHOR)])
 class EntityParticles @Inject constructor(
-        val logger: Logger,
+        private val logger: Logger,
         @DefaultConfig(sharedRoot = true) configLoader: ConfigurationLoader<CommentedConfigurationNode>,
-        val pluginContainer: PluginContainer,
+        private val pluginContainer: PluginContainer,
         val bStats: BStats
 ) {
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "2.0.4"
+        const val VERSION = "2.0.5"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -142,16 +142,20 @@ class EntityParticles @Inject constructor(
         val particleId = itemInHand.get(PARTICLE_ID).orNull()
         val isRemover = itemInHand.get(IS_REMOVER).orElse(false)
 
-        event.isCancelled = true
-
-        if (particleId != null) {
-            player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
-            executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
-        } else if (isRemover) {
-            if (!targetEntity.get(EntityParticlesKeys.PARTICLE_ID).isPresent) return
-            player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
-            executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing")
+        when {
+            particleId != null -> {
+                player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
+                executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
+            }
+            isRemover -> {
+                if (!targetEntity.get(EntityParticlesKeys.PARTICLE_ID).isPresent) return
+                player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
+                executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing")
+            }
+            else -> return // nothing, no EntityParticle item, prevent cancelling the event
         }
+
+        event.isCancelled = true
     }
 
     @Listener
