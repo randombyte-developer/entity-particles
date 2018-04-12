@@ -13,7 +13,6 @@ import de.randombyte.entityparticles.data.EntityParticlesKeys.IS_REMOVER
 import de.randombyte.entityparticles.data.EntityParticlesKeys.PARTICLE_ID
 import de.randombyte.entityparticles.data.ParticleData
 import de.randombyte.entityparticles.data.RemoverItemData
-import de.randombyte.kosp.bstats.BStats
 import de.randombyte.kosp.config.ConfigManager
 import de.randombyte.kosp.executeAsConsole
 import de.randombyte.kosp.extensions.orNull
@@ -21,6 +20,7 @@ import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
 import ninja.leaping.configurate.commented.CommentedConfigurationNode
 import ninja.leaping.configurate.loader.ConfigurationLoader
+import org.bstats.sponge.Metrics
 import org.slf4j.Logger
 import org.spongepowered.api.Sponge
 import org.spongepowered.api.block.BlockTypes
@@ -60,12 +60,12 @@ class EntityParticles @Inject constructor(
         private val logger: Logger,
         @DefaultConfig(sharedRoot = true) configLoader: ConfigurationLoader<CommentedConfigurationNode>,
         private val pluginContainer: PluginContainer,
-        val bStats: BStats
+        val bStats: Metrics
 ) {
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "2.0.5"
+        const val VERSION = "2.1"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -205,14 +205,14 @@ class EntityParticles @Inject constructor(
                                 },
                                 updateCommands = { registerCommands() }
                         ))
-                        .build(), "newConfig")
+                        .build(), "newconfig")
                 .child(CommandSpec.builder()
                         .child(CommandSpec.builder()
                                 .permission("$ROOT_PERMISSION.remover-item.give")
                                 .arguments(playerOrSource(PLAYER_ARG.toText()))
                                 .executor(GiveRemoverItemCommand(getRemoverItem = { config.removerItem.createItemStack() }))
                                 .build(), "give")
-                        .build(), "removerItem")
+                        .build(), "removeritem")
                 .build(), "entityparticles", "particles", "ep")
     }
 
