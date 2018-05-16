@@ -77,7 +77,6 @@ class EntityParticles @Inject constructor(
     private val configManager = ConfigManager(
             configLoader = configLoader,
             clazz = Config::class.java,
-            hyphenSeparatedKeys = true,
             simpleTextSerialization = true,
             simpleTextTemplateSerialization = true)
 

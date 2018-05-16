@@ -3,7 +3,6 @@ package de.randombyte.entityparticles
 import com.flowpowered.math.vector.Vector3d
 import com.flowpowered.math.vector.Vector3i
 import de.randombyte.entityparticles.Config.Particle.Effect
-import de.randombyte.entityparticles.data.ParticleData
 import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
 import ninja.leaping.configurate.objectmapping.Setting
@@ -20,28 +19,28 @@ import org.spongepowered.api.text.Text
 
 @ConfigSerializable
 internal data class Config(
-        @Setting(comment = "Ignore the 'glowing' and 'effects' setting.") val removerItem: Particle = Particle(),
-        @Setting val particles: Map<String, Particle> = emptyMap(),
-        @Setting val blockedEntities: List<EntityType> = emptyList()
+        @Setting("remover-item", comment = "Ignore the 'glowing' and 'effects' setting.") val removerItem: Particle = Particle(),
+        @Setting("particles") val particles: Map<String, Particle> = emptyMap(),
+        @Setting("blocked-entities") val blockedEntities: List<EntityType> = emptyList()
 ) {
     @ConfigSerializable
     internal data class Particle(
-            @Setting val item: String = "",
-            @Setting val displayName: Text = Text.EMPTY,
-            @Setting val itemDescription: Text = Text.EMPTY,
-            @Setting val itemEnchanted: Boolean = false,
-            @Setting val glowing: Boolean = false,
-            @Setting val effects: List<Effect> = emptyList()
+            @Setting("item") val item: String = "",
+            @Setting("display-name") val displayName: Text = Text.EMPTY,
+            @Setting("item-description") val itemDescription: Text = Text.EMPTY,
+            @Setting("item-enchanted") val itemEnchanted: Boolean = false,
+            @Setting("glowing") val glowing: Boolean = false,
+            @Setting("effects") val effects: List<Effect> = emptyList()
     ) {
         @ConfigSerializable
         internal data class Effect(
-                @Setting val type: ParticleType = ParticleTypes.HEART,
-                @Setting val quantity: Int = -1,
-                @Setting val velocity: Vector3d = Vector3d.ONE.negate(),
-                @Setting val offset: Vector3d = Vector3d.ONE.negate(),
-                @Setting val centerOffset: Vector3d = Vector3d.ZERO,
-                @Setting(comment = "In ticks(20 ticks = 1 second)") val interval: Int = -1,
-                @Setting(comment = "Supported by redstone dust") val color: Vector3i = Vector3i.ONE.negate()
+                @Setting("type") val type: ParticleType = ParticleTypes.HEART,
+                @Setting("quantity") val quantity: Int = -1,
+                @Setting("velocity") val velocity: Vector3d = Vector3d.ONE.negate(),
+                @Setting("offset") val offset: Vector3d = Vector3d.ONE.negate(),
+                @Setting("center-offset") val centerOffset: Vector3d = Vector3d.ZERO,
+                @Setting("interval", comment = "In ticks(20 ticks = 1 second)") val interval: Int = -1,
+                @Setting("color", comment = "Supported by redstone dust") val color: Vector3i = Vector3i.ONE.negate()
         )
 
         fun createItemStack() = ItemStack.builder()
