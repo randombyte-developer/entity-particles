@@ -31,7 +31,6 @@ dependencies {
 shadowJar {
     configurations = [project.configurations.shadow]
 
-    relocate "de.randombyte.entityparticles", "de.randombyte.entityparticles.plugin"
     relocate "kotlin", "de.randombyte.entityparticles.shaded.kotlin"
     relocate "de.randombyte.kosp", "de.randombyte.entityparticles.shaded.kosp"
     relocate "org.bstats", "de.randombyte.entityparticles.shaded.bstats"
