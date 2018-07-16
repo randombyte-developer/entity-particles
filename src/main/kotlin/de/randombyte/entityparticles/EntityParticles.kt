@@ -28,7 +28,6 @@ import org.spongepowered.api.command.args.GenericArguments.*
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.config.DefaultConfig
 import org.spongepowered.api.data.DataRegistration
-import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.data.type.HandTypes
 import org.spongepowered.api.effect.particle.ParticleEffect
 import org.spongepowered.api.effect.particle.ParticleOptions
@@ -37,13 +36,14 @@ import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.event.Cancellable
 import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.block.InteractBlockEvent
+import org.spongepowered.api.event.entity.DestructEntityEvent
 import org.spongepowered.api.event.entity.InteractEntityEvent
+import org.spongepowered.api.event.entity.SpawnEntityEvent
 import org.spongepowered.api.event.filter.Getter
 import org.spongepowered.api.event.filter.cause.First
 import org.spongepowered.api.event.game.GameReloadEvent
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
-import org.spongepowered.api.event.game.state.GameStartingServerEvent
 import org.spongepowered.api.event.item.inventory.UseItemStackEvent
 import org.spongepowered.api.item.inventory.ItemStack
 import org.spongepowered.api.plugin.Dependency
@@ -51,6 +51,7 @@ import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.plugin.PluginContainer
 import org.spongepowered.api.scheduler.Task
 import org.spongepowered.api.util.Color
+import java.util.*
 
 @Plugin(id = EntityParticles.ID,
         name = EntityParticles.NAME,
@@ -66,7 +67,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "2.1"
+        const val VERSION = "2.1.7"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -82,6 +83,9 @@ class EntityParticles @Inject constructor(
             simpleTextTemplateSerialization = true)
 
     private lateinit var config: Config
+
+    // <world, <entity, particleId>>
+    val trackedEntities: MutableMap<UUID, MutableMap<UUID, String>> = mutableMapOf()
 
     @Listener
     fun onPreInit(event: GamePreInitializationEvent) {
@@ -112,6 +116,7 @@ class EntityParticles @Inject constructor(
     fun onGameLoadComplete(event: GameLoadCompleteEvent) {
         loadConfig()
         registerCommands()
+        startParticleTask()
 
         logger.info("$NAME loaded: $VERSION")
     }
@@ -125,8 +130,19 @@ class EntityParticles @Inject constructor(
     }
 
     @Listener
-    fun onServerStarting(event: GameStartingServerEvent) {
-        startParticleTask()
+    fun onLoadEntity(event: SpawnEntityEvent) {
+        event.entities
+                .filter { it.particleId != null }
+                .forEach {
+                    val worldUuid = it.location.extent.uniqueId
+                    val entities = trackedEntities.getOrPut(worldUuid) { mutableMapOf() }
+                    entities += it.uniqueId to it.particleId!!
+                }
+    }
+
+    @Listener
+    fun onUnloadEntity(event: DestructEntityEvent) {
+        trackedEntities[event.targetEntity.location.extent.uniqueId]?.remove(event.targetEntity.uniqueId)
     }
 
     private fun loadConfig() {
@@ -197,7 +213,7 @@ class EntityParticles @Inject constructor(
                                 string(WORLD_UUID_ARG.toText()),
                                 string(ENTITY_UUID_ARG.toText()),
                                 choices(PARTICLE_ID_ARG.toText(), particleIdChoices.plus("nothing" to "nothing")))
-                        .executor(SetParticleCommand(particleExists = { id -> config.particles.containsKey(id) }))
+                        .executor(SetParticleCommand(getParticleConfig = { id -> config.particles[id] }))
                         .build(), "set")
                 .child(CommandSpec.builder()
                         .permission("$ROOT_PERMISSION.new-config")
@@ -224,27 +240,19 @@ class EntityParticles @Inject constructor(
         Task.builder()
                 .intervalTicks(1)
                 .execute { ->
-                    if (!Sponge.isServerAvailable()) {
-                        return@execute
-                    }
-
-                    Sponge.getServer().worlds.forEach { world ->
-                        world.entities
-                                .filter { it.get(EntityParticlesKeys.PARTICLE_ID).isPresent }
-                                .forEach entityLoop@ { entity ->
-                                    val particleId = entity.get(EntityParticlesKeys.PARTICLE_ID).get()
-                                    val particleConfig = config.particles[particleId]
-                                    if (particleConfig == null) {
-                                        // invalid data -> remove
-                                        entity.remove(ParticleData::class.java)
-                                        return@entityLoop
-                                    }
-
+                    Sponge.getServer().worlds.forEach worldLoop@ { world ->
+                        (trackedEntities[world.uniqueId] ?: return@worldLoop)
+                                .mapNotNull { (uuid, id) ->
+                                    val entity = world.getEntity(uuid).orNull()
+                                            ?: return@mapNotNull null
+                                    entity to id
+                                }
+                                .forEach entityLoop@ { (entity, id) ->
+                                    val particleConfig = config.particles.getValue(id)
                                     particleConfig.effects.forEach { effect ->
                                         val doEffectThisTick = Sponge.getServer().runningTimeTicks % effect.interval == 0
                                         if (doEffectThisTick) {
                                             entity.spawnParticles(effect)
-                                            entity.offer(Keys.GLOWING, particleConfig.glowing)
                                         }
                                     }
                                 }
@@ -262,6 +270,17 @@ class EntityParticles @Inject constructor(
                 .option(ParticleOptions.COLOR, Color.of(effect.color.coerceIn(Vector3i.ZERO..Vector3i.from(255, 255, 255))))
                 .build()
         location.extent.spawnParticles(particleEffect, location.position.add(effect.centerOffset))
+    }
+
+    private val Entity.particleId: String? get() {
+        val id = this.get(EntityParticlesKeys.PARTICLE_ID).orNull() ?: return null
+        val particleConfig = config.particles[id]
+        if (particleConfig == null) {
+            // invalid data -> remove
+            this.remove(ParticleData::class.java)
+            return null
+        }
+        return id
     }
 
     private fun ItemStack.setAmount(amount: Int): ItemStack = apply { quantity = amount }

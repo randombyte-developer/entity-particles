@@ -13,7 +13,7 @@ if (!isJitpack) {
 }
 
 group "de.randombyte"
-version "2.1"
+version "2.1.7"
 
 repositories {
     jcenter()
