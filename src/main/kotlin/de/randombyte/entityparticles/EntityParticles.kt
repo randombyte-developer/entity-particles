@@ -43,6 +43,7 @@ import org.spongepowered.api.event.filter.cause.First
 import org.spongepowered.api.event.game.GameReloadEvent
 import org.spongepowered.api.event.game.state.GameLoadCompleteEvent
 import org.spongepowered.api.event.game.state.GamePreInitializationEvent
+import org.spongepowered.api.event.game.state.GameStartingServerEvent
 import org.spongepowered.api.event.item.inventory.UseItemStackEvent
 import org.spongepowered.api.item.inventory.ItemStack
 import org.spongepowered.api.plugin.Dependency
@@ -111,7 +112,6 @@ class EntityParticles @Inject constructor(
     fun onGameLoadComplete(event: GameLoadCompleteEvent) {
         loadConfig()
         registerCommands()
-        startParticleTask()
 
         logger.info("$NAME loaded: $VERSION")
     }
@@ -122,6 +122,11 @@ class EntityParticles @Inject constructor(
         registerCommands()
 
         logger.info("Reloaded!")
+    }
+
+    @Listener
+    fun onServerStarting(event: GameStartingServerEvent) {
+        startParticleTask()
     }
 
     private fun loadConfig() {
@@ -219,6 +224,10 @@ class EntityParticles @Inject constructor(
         Task.builder()
                 .intervalTicks(1)
                 .execute { ->
+                    if (!Sponge.isServerAvailable()) {
+                        return@execute
+                    }
+
                     Sponge.getServer().worlds.forEach { world ->
                         world.entities
                                 .filter { it.get(EntityParticlesKeys.PARTICLE_ID).isPresent }
