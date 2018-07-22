@@ -3,8 +3,10 @@ package de.randombyte.entityparticles
 import com.flowpowered.math.vector.Vector3d
 import com.flowpowered.math.vector.Vector3i
 import de.randombyte.entityparticles.Config.Particle.Effect
+import de.randombyte.kosp.extensions.deserialize
 import de.randombyte.kosp.extensions.red
-import de.randombyte.kosp.extensions.toText
+import de.randombyte.kosp.extensions.serialize
+import de.randombyte.kosp.extensions.tryAsByteItem
 import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
 import org.spongepowered.api.data.key.Keys
@@ -15,7 +17,6 @@ import org.spongepowered.api.entity.EntityTypes
 import org.spongepowered.api.item.enchantment.Enchantment
 import org.spongepowered.api.item.enchantment.EnchantmentTypes
 import org.spongepowered.api.item.inventory.ItemStack
-import org.spongepowered.api.text.Text
 
 @ConfigSerializable
 internal data class Config(
@@ -26,8 +27,8 @@ internal data class Config(
     @ConfigSerializable
     internal data class Particle(
             @Setting("item") val item: String = "",
-            @Setting("display-name") val displayName: Text = Text.EMPTY,
-            @Setting("item-description") val itemDescription: Text = Text.EMPTY,
+            @Setting("display-name") val displayName: String = "",
+            @Setting("item-description") val itemDescription: String = "",
             @Setting("item-enchanted") val itemEnchanted: Boolean = false,
             @Setting("glowing") val glowing: Boolean = false,
             @Setting("effects") val effects: List<Effect> = emptyList()
@@ -44,7 +45,7 @@ internal data class Config(
         )
 
         fun createItemStack() = ItemStack.builder()
-                .fromSnapshot(resolveByteItems(item))
+                .fromSnapshot(item.tryAsByteItem())
                 .quantity(1) // force single item
                 .apply {
                     if (itemEnchanted) {
@@ -52,8 +53,8 @@ internal data class Config(
                         add(Keys.HIDE_ENCHANTMENTS, true)
                     }
                 }
-                .add(Keys.DISPLAY_NAME, displayName)
-                .add(Keys.ITEM_LORE, listOf(itemDescription))
+                .add(Keys.DISPLAY_NAME, displayName.deserialize())
+                .add(Keys.ITEM_LORE, listOf(itemDescription.deserialize()))
                 .build()
     }
 
@@ -61,15 +62,15 @@ internal data class Config(
             blockedEntities = listOf(EntityTypes.PLAYER),
             removerItem = Particle(
                     item = "minecraft:bone",
-                    displayName = "Particles remover".toText(),
-                    itemDescription = Text.EMPTY,
+                    displayName = "Particles remover",
+                    itemDescription = "",
                     itemEnchanted = true
             ),
             particles = mapOf(
             "love" to Particle(
                     item = "minecraft:blaze_rod",
-                    displayName = "Love".red(),
-                    itemDescription = "Right click an entity to apply this effect".toText(),
+                    displayName = "Love".red().serialize(),
+                    itemDescription = "Right click an entity to apply this effect",
                     itemEnchanted = true,
                     glowing = false,
                     effects = listOf(Effect(

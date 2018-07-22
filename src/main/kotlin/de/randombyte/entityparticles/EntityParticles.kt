@@ -14,7 +14,7 @@ import de.randombyte.entityparticles.data.EntityParticlesKeys.PARTICLE_ID
 import de.randombyte.entityparticles.data.ParticleData
 import de.randombyte.entityparticles.data.RemoverItemData
 import de.randombyte.kosp.config.ConfigManager
-import de.randombyte.kosp.executeAsConsole
+import de.randombyte.kosp.extensions.executeAsConsole
 import de.randombyte.kosp.extensions.orNull
 import de.randombyte.kosp.extensions.red
 import de.randombyte.kosp.extensions.toText
@@ -79,9 +79,8 @@ class EntityParticles @Inject constructor(
 
     private val configManager = ConfigManager(
             configLoader = configLoader,
-            clazz = Config::class.java,
-            simpleTextSerialization = true,
-            simpleTextTemplateSerialization = true)
+            clazz = Config::class.java
+    )
 
     private lateinit var config: Config
 
@@ -151,7 +150,7 @@ class EntityParticles @Inject constructor(
     }
 
     private fun loadConfig() {
-        config = configManager.get()
+        config = configManager.load()
         saveConfig() // generate config
     }
 
@@ -170,12 +169,12 @@ class EntityParticles @Inject constructor(
         when {
             particleId != null -> {
                 player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
-                executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId")
+                ("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId").executeAsConsole()
             }
             isRemover -> {
                 if (!targetEntity.get(EntityParticlesKeys.PARTICLE_ID).isPresent) return
                 player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
-                executeAsConsole("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing")
+                ("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing").executeAsConsole()
             }
             else -> return // nothing, no EntityParticle item, prevent cancelling the event
         }
