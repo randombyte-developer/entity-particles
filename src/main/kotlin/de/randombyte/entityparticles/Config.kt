@@ -40,7 +40,7 @@ internal data class Config(
                 @Setting("offset") val offset: Vector3d = Vector3d.ONE.negate(),
                 @Setting("center-offset") val centerOffset: Vector3d = Vector3d.ZERO,
                 @Setting("interval", comment = "In ticks(20 ticks = 1 second)") val interval: Int = -1,
-                @Setting("color", comment = "Supported by redstone dust") val color: Vector3i = Vector3i.ONE.negate()
+                @Setting("color", comment = "Supported by redstone dust, mobspell and ambient mobspell") val color: Vector3i = Vector3i.ONE.negate()
         )
 
         fun createItemStack() = ItemStack.builder()
