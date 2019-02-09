@@ -3,7 +3,7 @@ package de.randombyte.entityparticles.commands
 import de.randombyte.entityparticles.Config
 import de.randombyte.entityparticles.EntityParticles
 import de.randombyte.entityparticles.EntityParticles.Companion.PARTICLE_ID_ARG
-import de.randombyte.entityparticles.data.ParticleData
+import de.randombyte.entityparticles.data.particleId
 import de.randombyte.kosp.extensions.getWorld
 import de.randombyte.kosp.extensions.orNull
 import de.randombyte.kosp.extensions.toText
@@ -38,7 +38,7 @@ internal class SetParticleCommand(
         val trackedEntities = entityParticles.trackedEntities.getOrPut(entity.location.extent.uniqueId) { mutableMapOf() }
 
         if (particleId == "nothing") {
-            entity.remove(ParticleData::class.java)
+            entity.particleId = null
             entity.offer(Keys.GLOWING, false)
 
             trackedEntities -= (entity.uniqueId)
@@ -49,7 +49,7 @@ internal class SetParticleCommand(
         val particleConfig = getParticleConfig(particleId)
                 ?: throw CommandException("Particle '$particleId' is not available!".toText())
 
-        entity.offer(ParticleData(id = particleId, isActive = true))
+        entity.particleId = particleId
 
         if (particleConfig.glowing) {
             entity.offer(Keys.GLOWING, true)

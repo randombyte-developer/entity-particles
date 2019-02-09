@@ -13,6 +13,7 @@ import de.randombyte.entityparticles.data.EntityParticlesKeys.IS_REMOVER
 import de.randombyte.entityparticles.data.EntityParticlesKeys.PARTICLE_ID
 import de.randombyte.entityparticles.data.ParticleData
 import de.randombyte.entityparticles.data.RemoverItemData
+import de.randombyte.entityparticles.data.particleId
 import de.randombyte.kosp.config.ConfigManager
 import de.randombyte.kosp.extensions.executeAsConsole
 import de.randombyte.kosp.extensions.orNull
@@ -68,13 +69,16 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "3.0.0"
+        const val VERSION = "3.1.0"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
 
         const val PARTICLE_ID_ARG = "particleId"
         const val PLAYER_ARG = "player"
+
+        const val PIXELMON_ID = "pixelmon"
+        const val PIXELMON_PARTICLE_TAG_KEY = "$ID:particle"
     }
 
     private val configManager = ConfigManager(
@@ -172,7 +176,7 @@ class EntityParticles @Inject constructor(
                 ("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} $particleId").executeAsConsole()
             }
             isRemover -> {
-                if (!targetEntity.get(EntityParticlesKeys.PARTICLE_ID).isPresent) return
+                if (targetEntity.particleId == null) return
                 player.setItemInHand(HandTypes.MAIN_HAND, itemInHand.setAmount(itemInHand.quantity - 1))
                 ("entityParticles set ${targetEntity.location.extent.uniqueId} ${targetEntity.uniqueId} nothing").executeAsConsole()
             }
@@ -278,17 +282,6 @@ class EntityParticles @Inject constructor(
                 .option(ParticleOptions.COLOR, Color.of(effect.color.coerceIn(Vector3i.ZERO..Vector3i.from(255, 255, 255))))
                 .build()
         location.extent.spawnParticles(particleEffect, location.position.add(effect.centerOffset))
-    }
-
-    private val Entity.particleId: String? get() {
-        val id = this.get(EntityParticlesKeys.PARTICLE_ID).orNull() ?: return null
-        val particleConfig = config.particles[id]
-        if (particleConfig == null) {
-            // invalid data -> remove
-            this.remove(ParticleData::class.java)
-            return null
-        }
-        return id
     }
 
     private fun ItemStack.setAmount(amount: Int): ItemStack = apply { quantity = amount }

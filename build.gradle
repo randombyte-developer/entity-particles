@@ -1,3 +1,16 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+    }
+    dependencies {
+        classpath "net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT"
+    }
+}
+
 plugins {
     id "maven"
     id "org.jetbrains.kotlin.jvm" version "1.2.51"
@@ -12,8 +25,16 @@ if (!isJitpack) {
     apply plugin: "flavor.pie.promptsign"
 }
 
+apply plugin: "net.minecraftforge.gradle.forge"
+
 group "de.randombyte"
-version "3.0.0"
+version "3.1.0"
+
+minecraft {
+    version = "1.12.2-14.23.5.2768"
+    runDir = "run"
+    mappings = "snapshot_20171003"
+}
 
 repositories {
     jcenter()
@@ -32,6 +53,7 @@ dependencies {
     kapt "org.spongepowered:spongeapi:7.0.0"
     shadow("com.github.randombyte-developer.kosp:kosp:v2.2.3") { transitive = false }
     shadow "org.bstats:bstats-sponge:1.2"
+    compile files("libs/Pixelmon-1.12.2-7.0.1-server.jar")
 }
 
 shadowJar {
@@ -44,6 +66,7 @@ shadowJar {
     classifier = null // Remove "-all" suffix from output file name
 }
 build.dependsOn shadowJar
+reobfJar.dependsOn shadowJar
 install.dependsOn shadowJar
 if (!isJitpack) {
     signArchives.dependsOn shadowJar
