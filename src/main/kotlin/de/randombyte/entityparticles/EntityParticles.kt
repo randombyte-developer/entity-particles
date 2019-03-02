@@ -69,7 +69,7 @@ class EntityParticles @Inject constructor(
     internal companion object {
         const val ID = "entity-particles"
         const val NAME = "EntityParticles"
-        const val VERSION = "3.1.0"
+        const val VERSION = "3.1.1"
         const val AUTHOR = "RandomByte"
 
         const val ROOT_PERMISSION = ID
@@ -79,6 +79,9 @@ class EntityParticles @Inject constructor(
 
         const val PIXELMON_ID = "pixelmon"
         const val PIXELMON_PARTICLE_TAG_KEY = "$ID:particle"
+
+        private val _INSTANCE = lazy { Sponge.getPluginManager().getPlugin(EntityParticles.ID).get().instance.get() as EntityParticles }
+        val INSTANCE: EntityParticles get() = _INSTANCE.value
     }
 
     private val configManager = ConfigManager(
@@ -141,16 +144,21 @@ class EntityParticles @Inject constructor(
     fun onLoadEntity(event: SpawnEntityEvent) {
         event.entities
                 .filter { it.particleId != null }
-                .forEach {
-                    val worldUuid = it.location.extent.uniqueId
-                    val entities = trackedEntities.getOrPut(worldUuid) { mutableMapOf() }
-                    entities += it.uniqueId to it.particleId!!
-                }
+                .forEach { addTrackedEntity(it) }
     }
 
     @Listener
     fun onUnloadEntity(event: DestructEntityEvent) {
-        trackedEntities[event.targetEntity.location.extent.uniqueId]?.remove(event.targetEntity.uniqueId)
+        removeTrackedEntity(event.targetEntity)
+    }
+
+    fun addTrackedEntity(entity: Entity) {
+        val trackedEntities = trackedEntities.getOrPut(entity.location.extent.uniqueId) { mutableMapOf() }
+        trackedEntities += entity.uniqueId to entity.particleId!!
+    }
+
+    fun removeTrackedEntity(entity: Entity) {
+        trackedEntities[entity.location.extent.uniqueId]?.remove(entity.uniqueId)
     }
 
     private fun loadConfig() {
@@ -260,7 +268,13 @@ class EntityParticles @Inject constructor(
                                     entity to id
                                 }
                                 .forEach entityLoop@ { (entity, id) ->
-                                    val particleConfig = config.particles.getValue(id)
+                                    val particleConfig = config.particles[id]
+                                    if (particleConfig == null) {
+                                        entity.particleId = null
+                                        removeTrackedEntity(entity)
+
+                                        return@entityLoop
+                                    }
                                     particleConfig.effects.forEach { effect ->
                                         val doEffectThisTick = Sponge.getServer().runningTimeTicks % effect.interval == 0
                                         if (doEffectThisTick) {

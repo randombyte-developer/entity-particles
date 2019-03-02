@@ -28,7 +28,7 @@ if (!isJitpack) {
 apply plugin: "net.minecraftforge.gradle.forge"
 
 group "de.randombyte"
-version "3.1.0"
+version "3.1.1"
 
 minecraft {
     version = "1.12.2-14.23.5.2768"
@@ -53,7 +53,7 @@ dependencies {
     kapt "org.spongepowered:spongeapi:7.0.0"
     shadow("com.github.randombyte-developer.kosp:kosp:v2.2.3") { transitive = false }
     shadow "org.bstats:bstats-sponge:1.2"
-    compile files("libs/Pixelmon-1.12.2-7.0.1-server.jar")
+    compile files("libs/Pixelmon-1.12.2-7.0.3.jar")
 }
 
 shadowJar {

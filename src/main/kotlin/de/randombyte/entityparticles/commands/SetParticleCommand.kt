@@ -34,14 +34,11 @@ internal class SetParticleCommand(
         val entity = (world.getEntity(entityUuidString.toUUID()).orNull()
                 ?: throw CommandException("Entity '$entityUuidString' in world '$world' is not available!".toText()))
 
-        val entityParticles = Sponge.getPluginManager().getPlugin(EntityParticles.ID).get().instance.get() as EntityParticles
-        val trackedEntities = entityParticles.trackedEntities.getOrPut(entity.location.extent.uniqueId) { mutableMapOf() }
-
         if (particleId == "nothing") {
             entity.particleId = null
             entity.offer(Keys.GLOWING, false)
 
-            trackedEntities -= (entity.uniqueId)
+            EntityParticles.INSTANCE.removeTrackedEntity(entity)
 
             return CommandResult.success()
         }
@@ -55,7 +52,7 @@ internal class SetParticleCommand(
             entity.offer(Keys.GLOWING, true)
         }
 
-        trackedEntities += entity.uniqueId to particleId
+        EntityParticles.INSTANCE.addTrackedEntity(entity)
 
         return CommandResult.success()
     }
